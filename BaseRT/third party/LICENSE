@@ -1,0 +1,44 @@
+BaseRT Engine — Proprietary Software License
+
+Copyright (c) 2026 BaseCompute. All rights reserved.
+
+This package distributes the BaseRT Engine (the "Engine"): the compiled
+`libbaseRT` dynamic library, the `baseRT.metallib` GPU kernel library, and the
+`basert-*` runtime executables. The Engine is proprietary and confidential to
+BaseCompute.
+
+1. License grant. Subject to your compliance with this license, BaseCompute
+   grants you a non-exclusive, non-transferable, non-sublicensable, revocable
+   license to install and run unmodified copies of the Engine on Apple Silicon
+   hardware you own or control, for your own internal use and evaluation.
+
+2. Restrictions. You may not, in whole or in part: (a) redistribute,
+   sublicense, sell, rent, lease, host as a service, or otherwise make the
+   Engine available to any third party; (b) reverse engineer, decompile, or
+   disassemble the Engine, or otherwise attempt to derive its source code or
+   underlying algorithms, except to the extent this restriction is prohibited
+   by applicable law; (c) modify, adapt, or create derivative works of the
+   Engine; or (d) remove, obscure, or alter any proprietary or attribution
+   notices.
+
+3. Open-source components. This license covers only the Engine binaries listed
+   above. The BaseRT C API headers, the `.base` model format, the `basert` CLI
+   and model converter, and the language bindings are published separately as
+   open source under the Apache License, Version 2.0
+   (https://github.com/basecompute/baseRT) and are governed by that license,
+   not this one. Third-party components incorporated into the Engine are listed
+   in the accompanying NOTICE file and remain under their respective licenses.
+
+4. No warranty. THE ENGINE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+5. Limitation of liability. IN NO EVENT SHALL BASECOMPUTE BE LIABLE FOR ANY
+   CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT,
+   OR OTHERWISE, ARISING FROM OR IN CONNECTION WITH THE ENGINE OR ITS USE.
+
+6. Termination. This license terminates automatically if you breach any of its
+   terms. On termination you must cease using and delete all copies of the
+   Engine.
+
+For licensing inquiries, contact BaseCompute.
