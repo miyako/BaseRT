@@ -37,8 +37,7 @@ This 4D component manages the whole lifecycle: resolving and downloading models 
 ## Installation
 
 1. Add this project as a 4D component (or copy it into `Components/` of your host database).
-2. Download or build `basert-serve` from [miyako/BaseRT](https://github.com/miyako/BaseRT) and place it at `RESOURCES/bin/macOS/basert-serve` in your project.
-3. Call `cs.BaseRT.new(...)` from `onStartup` (see below), and `cs.BaseRT.new().terminate()` from `onExit`.
+2. Call `cs.BaseRT.BaseRT.new(...)` from `onStartup` (see below), and `cs.BaseRT.BaseRT.new().terminate()` from `onExit`.
 
 ## Basic usage
 
