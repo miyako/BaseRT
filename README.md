@@ -43,7 +43,7 @@ The component manages the whole lifecycle: resolving and downloading models from
 ## Basic usage
 
 ```4d
-var $BaseRT : cs.BaseRT
+var $BaseRT : cs.BaseRT.BaseRT
 var $homeFolder : 4D.Folder
 $homeFolder:=Folder(fk home folder).folder(".BaseRT")
 
@@ -60,14 +60,14 @@ $huggingfaces:=cs.event.huggingfaces.new([$chat])
 var $options : Object
 $options:={max_tokens: 4096; max_context: 8192}
 
-$BaseRT:=cs.BaseRT.new(8080; $huggingfaces; $homeFolder; $options; $event)
+$BaseRT:=cs.BaseRT.BaseRT.new(8080; $huggingfaces; $homeFolder; $options; $event)
 ```
 
 On termination (e.g. in `onExit`):
 
 ```4d
-var $BaseRT : cs.BaseRT
-$BaseRT:=cs.BaseRT.new()
+var $BaseRT : cs.BaseRT.BaseRT
+$BaseRT:=cs.BaseRT.BaseRT.new()
 $BaseRT.terminate()
 ```
 
@@ -110,5 +110,5 @@ basert-serve <chat.gguf> --model <embeddings.gguf> --log-file <path> --max-token
 
 ## Credits
 
-- Native runtime: [miyako/BaseRT](https://github.com/miyako/BaseRT) — a Metal-based local inference engine for Apple Silicon.
+- Native runtime: [BaseRT](https://www.basecompute.co) — a Metal-based local inference engine for Apple Silicon.
 - This repository provides the 4D-side glue (process management, model resolution/downloading, event wiring) to run BaseRT as an embedded local LLM server inside a 4D application.
