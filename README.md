@@ -4,7 +4,7 @@ Local inference engine
 
 [BaseRT](https://github.com/basecompute/baseRT) is a high-performance, native C++ inference runtime built directly on Apple's Metal GPU API to run large language models locally on Apple Silicon. 
 
-The component manages the whole lifecycle: resolving and downloading models from Hugging Face, building the `basert-serve` command line, launching it as a background process, and shutting it down cleanly when the app quits.
+This 4D component manages the whole lifecycle: resolving and downloading models from Hugging Face, building the `basert-serve` command line, launching it as a background process, and shutting it down cleanly when the app quits.
 
 ## Requirements
 
@@ -37,13 +37,12 @@ The component manages the whole lifecycle: resolving and downloading models from
 ## Installation
 
 1. Add this project as a 4D component (or copy it into `Components/` of your host database).
-2. Download or build `basert-serve` from [miyako/BaseRT](https://github.com/miyako/BaseRT) and place it at `RESOURCES/bin/macOS/basert-serve` in your project.
-3. Call `cs.BaseRT.new(...)` from `onStartup` (see below), and `cs.BaseRT.new().terminate()` from `onExit`.
+2. Call `cs.BaseRT.BaseRT.new(...)` from `onStartup` (see below), and `cs.BaseRT.BaseRT.new().terminate()` from `onExit`.
 
 ## Basic usage
 
 ```4d
-var $BaseRT : cs.BaseRT
+var $BaseRT : cs.BaseRT.BaseRT
 var $homeFolder : 4D.Folder
 $homeFolder:=Folder(fk home folder).folder(".BaseRT")
 
@@ -60,14 +59,14 @@ $huggingfaces:=cs.event.huggingfaces.new([$chat])
 var $options : Object
 $options:={max_tokens: 4096; max_context: 8192}
 
-$BaseRT:=cs.BaseRT.new(8080; $huggingfaces; $homeFolder; $options; $event)
+$BaseRT:=cs.BaseRT.BaseRT.new(8080; $huggingfaces; $homeFolder; $options; $event)
 ```
 
 On termination (e.g. in `onExit`):
 
 ```4d
-var $BaseRT : cs.BaseRT
-$BaseRT:=cs.BaseRT.new()
+var $BaseRT : cs.BaseRT.BaseRT
+$BaseRT:=cs.BaseRT.BaseRT.new()
 $BaseRT.terminate()
 ```
 
@@ -110,5 +109,5 @@ basert-serve <chat.gguf> --model <embeddings.gguf> --log-file <path> --max-token
 
 ## Credits
 
-- Native runtime: [miyako/BaseRT](https://github.com/miyako/BaseRT) — a Metal-based local inference engine for Apple Silicon.
+- Native runtime: [BaseRT](https://www.basecompute.co) — a Metal-based local inference engine for Apple Silicon.
 - This repository provides the 4D-side glue (process management, model resolution/downloading, event wiring) to run BaseRT as an embedded local LLM server inside a 4D application.
