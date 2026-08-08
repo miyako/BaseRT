@@ -4,7 +4,7 @@ Local inference engine
 
 [BaseRT](https://github.com/basecompute/baseRT) is a high-performance, native C++ inference runtime built directly on Apple's Metal GPU API to run large language models locally on Apple Silicon. 
 
-The component manages the whole lifecycle: resolving and downloading models from Hugging Face, building the `basert-serve` command line, launching it as a background process, and shutting it down cleanly when the app quits.
+This 4D component manages the whole lifecycle: resolving and downloading models from Hugging Face, building the `basert-serve` command line, launching it as a background process, and shutting it down cleanly when the app quits.
 
 ## Requirements
 
