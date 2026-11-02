@@ -21,6 +21,8 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      - name: Check distribution boundary
+        run: python3 scripts/check-distribution.py
       - name: Check build-output preservation
         run: python3 -m unittest discover -s tests -p 'test_*.py'
       - name: Read pinned toolchain

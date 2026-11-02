@@ -23,9 +23,11 @@ its process helpers, and the BaseRT worker from source. **Inference still requir
 a separately obtained, compatible, licensed `libbaseRT` engine and its Metal libraries.**
 There is no full engine source build in the public upstream repository.
 
-Existing binaries in `BaseRT/Resources/bin/macOS` are preserved as a **legacy
-runtime**, not represented as current source-built binaries. Source builds are
-isolated under ignored `.build/`; selecting them is explicit.
+The proprietary legacy runtime has been removed from the current tree. No
+inference executable, engine dylib or Metal kernels are bundled. The separate
+open-source `basert` launcher is retained, but is not an inference engine or a
+replacement for `basert-serve`. Source builds are isolated under ignored `.build/`;
+selecting a runtime is explicit.
 
 ## Requirements and supported platforms
 
@@ -53,8 +55,9 @@ use compatible **`.base`** weights, not llama.cpp GGUF models.
 
 ## Installation and source build
 
-1. Add this repository as a 4D component, or install a component release into
-   your host's `Components/` directory. Resolve its component dependencies.
+1. Use the current source component under `BaseRT/Project` and resolve its
+   component dependencies. Existing release tags/ZIP/DMG files predate the
+   runtime removal; do not treat them as wrapper-only distributions.
 2. Obtain the BaseRT engine separately from
    [upstream v0.4.3](https://github.com/basecompute/baseRT/releases/tag/v0.4.3),
    review its license, and retain its matching libraries, Metal files, LICENSE
@@ -66,9 +69,19 @@ use compatible **`.base`** weights, not llama.cpp GGUF models.
    python3 scripts/build-native.py
    ```
 
-4. Set `source_runtime` and `engine_dir` in the 4D options below. Without
-   `source_runtime`, the adapter continues using the preserved legacy
-   `/RESOURCES/bin/macOS/basert-serve` (or `basert-serve` on `PATH`).
+4. Set `source_runtime` and `engine_dir` in the 4D options below. Alternatively,
+   for an independently obtained, compatible legacy server installation, set
+   `executable: File("/absolute/path/to/licensed/runtime/basert-serve")` instead
+   of `source_runtime`. Keep its matching libraries, Metal files and notices
+   alongside it, outside this repository/component, and make it executable
+   during your own installation. The adapter does not change installed files
+   or permissions. It never searches `/RESOURCES/bin` or `PATH`.
+
+Selecting neither runtime, both selectors, a malformed selector or a missing
+executable reports `onError(options, error)` with code **3** before worker launch.
+The message explains how to install/select the missing runtime; no engine is
+automatically fetched. File existence is not executable, architecture, version
+or ABI verification. Check compatibility and licensing for your installation.
 
 Build output is `.build/runtime/`. It contains a compatibility `basert-serve`
 shell entry point that executes the source-built **`basert serve`**, plus the
@@ -158,12 +171,13 @@ $BaseRT.terminate()
 The adapter passes the first model positionally and additional model files as
 repeated `--model` arguments. Other keys translate from `snake_case` into
 `--kebab-case`; true booleans emit flags. `source_runtime` and `engine_dir`
-are adapter-only `4D.Folder` options, never CLI flags.
+are adapter-only `4D.Folder` options; `executable` is an adapter-only `4D.File`.
+None are CLI flags. An external executable uses its parent as working directory.
 The source-runtime wrapper fixes `BASERT_SUPERFLUID_DIR` and disables automatic
 Superfluid installation/update checks, and explicitly selects the staged
 `SUPERFLUID_WORKER_BASERT`; the adapter sets `BASERT_LIB` to `engine_dir`.
 The engine must expose the ABI required by Superfluid; a matching filename
-alone does not establish compatibility. The preserved bundled engine was
+alone does not establish compatibility. The removed legacy engine was previously
 probed and lacks `baseRT_load_tokenizer_only`, so it cannot serve with the new
 source runtime. Obtain a compatible licensed engine separately; do not copy
 the old dylib into the new stage.
@@ -210,12 +224,22 @@ owned by the external download component. Cache reuse remains size-only on
 - [`build-native.yml`](.github/workflows/build-native.yml) builds pinned open
   tooling and uploads a source-only artifact, with CLI help/version checks.
   It does not publish releases or include the engine.
-- [`publish.yml`](.github/workflows/publish.yml) retains legacy 4D packaging,
-  signing and release steps, but **automatic binary publishing is blocked**.
-  Manual dispatch requires an explicit, default-false acknowledgment that
-  actual permission to redistribute **all** included proprietary binaries
-  has already been obtained. Checking the box does not grant that permission.
-  This workflow does not migrate the legacy bundled engine.
+- [`publish.yml`](.github/workflows/publish.yml) is **unconditionally blocked**,
+  for automatic and manual runs. Its legacy 4D packaging/signing/release steps
+  have no approved wrapper-only packaging contract. No acknowledgment can bypass
+  the gate. Source/tooling builds remain usable; enabling a future release
+  pipeline requires a separate reviewed wrapper-only packaging change.
+- [`check-distribution.yml`](.github/workflows/check-distribution.yml) rejects
+  engine filenames, opaque archives, symlinks and unreviewed native payloads.
+  Run `python3 scripts/check-distribution.py` before making a source package.
+  It checks tracked files and the entire component tree, including ignored/stale
+  files. Only the existing open-source `basert` launcher and unrelated 4D bridge
+  `Libraries/lib4d-arm64.dylib` are retained as byte-pinned native exceptions;
+  that allowlist is not a new license or a provenance claim.
+  `.gitignore` also excludes known engine assets. Do not copy a licensed
+  installation into this repository, use `git add -f`, or archive `.build/`
+  or a user installation for publication. Native tooling artifacts are staged
+  separately and checked for engine assets and unrecorded cached files.
 - [`pages.yml`](.github/workflows/pages.yml) validates and deploys the custom
   static [`docs/`](docs/) site on `main`; pull requests only validate/upload.
   Enable **Settings → Pages → Source: GitHub Actions** manually. No repository
@@ -224,9 +248,21 @@ owned by the external download component. Cache reuse remains size-only on
   `python3 scripts/check-docs.py`. No Jekyll/theme/README-as-homepage build is used.
 
 The wrapper and public launcher/server source use **Apache-2.0**; retain their
-licenses and notices. This does **not** relicense existing binary assets.
-[`BaseRT/third party/LICENSE`](BaseRT/third%20party/LICENSE) governs the legacy
-engine, and the current v0.4.3 engine archive also has a proprietary license
-restricting redistribution and third-party hosting. Obtain appropriate
-permission before shipping or exposing the engine to others. Model weights
-and other dependencies have their own terms.
+licenses and notices. This does **not** relicense binary assets.
+[`BaseRT/third party/LICENSE`](BaseRT/third%20party/LICENSE) is retained as the
+license record for the removed legacy engine. It explicitly covers
+`libbaseRT`, Metal kernels and `basert-*` runtime executables, restricts
+redistribution/third-party hosting, and distinguishes the open-source `basert`
+launcher. Removed paths under `BaseRT/Resources/bin/macOS/` are:
+`basert-bench`, `basert-chat`, `basert-complete`, `basert-inspect`,
+`basert-serve`, `basert-transcribe`, `libbaseRT.dylib`, `baseRT.metallib`
+and `baseRT_tensor.metallib`.
+
+This is a current-tree removal, **not a history or release purge**. Historical
+Git objects/tags (including `20.0.3`) still contain those files; existing
+`20.0.1`–`20.0.3` releases have ZIP/DMG assets that need a separate distribution
+review. Those release assets were not downloaded, inspected or changed here.
+The current upstream engine also has separate proprietary terms; obtain it
+independently and review those terms before use. An acknowledgment does not
+grant redistribution rights. Model weights and other dependencies have their
+own terms.

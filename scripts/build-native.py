@@ -155,7 +155,7 @@ def stage_runtime(stage, sources, manifests, config, rust, toolchain, env):
             if not notice.is_file():
                 raise ValueError(f"{name}: required upstream {filename} is missing")
             shutil.copy2(notice, notices / filename)
-    # Keep the existing 4D executable contract without modifying any bundled binary.
+    # Adapt the standalone launcher to the 4D server entry-point contract.
     shutil.copy2(ROOT / "scripts/basert-serve", stage / "basert-serve")
     (stage / "basert-serve").chmod(0o755)
     metadata = {

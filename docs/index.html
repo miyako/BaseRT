@@ -87,18 +87,23 @@
       <ol>
         <li>Use a compatible 4D version (the package targets 4D 20.7 ARM; the project dependency
           format is version 2100, so use 4D 21+ for source dependency resolution).</li>
-        <li>Install the component from <a href="https://github.com/miyako/BaseRT/releases">Releases</a>
-          or open the source project under <code>BaseRT/Project</code>. Binary publishing
-          requires actual upstream redistribution permission.</li>
+        <li>Use the current source component under <code>BaseRT/Project</code>.
+          Existing <a href="https://github.com/miyako/BaseRT/releases">release archives</a>
+          predate runtime removal and must not be treated as wrapper-only distributions.</li>
         <li>Resolve the declared <code>tcp</code>, <code>workers</code> and <code>event</code>
           dependencies. They are separate components, not built-in 4D classes.</li>
-        <li><a href="build.html">Build/stage the native server</a> before compiling a component
+        <li><a href="build.html">Build/stage the native server</a>
           and select it with the <code>source_runtime</code> option. The engine is
           proprietary and must be obtained separately.</li>
       </ol>
-      <p>Without <code>source_runtime</code>, the adapter retains the bundled legacy
-        <code>basert-serve</code>, falling back to <code>PATH</code> if absent. Those
-        committed binaries are not claimed to be current source builds.</p>
+      <p>No inference executable, engine dylib or Metal kernels are bundled.
+        Alternatively, select a separately licensed, compatible server installation
+        outside this repository with
+        <code>executable: File("/absolute/path/to/licensed/runtime/basert-serve")</code>
+        instead of <code>source_runtime</code>. Keep its matching libraries and notices
+        together and install executable permissions yourself. There is no resource or
+        <code>PATH</code> fallback, permission change or automatic engine download.
+        Missing/invalid runtime selection reports <code>onError</code> code 3 before launch.</p>
       </section>
       <section class="page-section" aria-labelledby="quick-start">
       <p class="eyebrow">From model to process</p>
@@ -164,7 +169,8 @@ $BaseRT.terminate()</code></pre>
         cache hits. Duplicate, failed, cancelled or stale completions cannot launch an
         old attempt. <code>terminate()</code> cancels pending startup and requests cleanup
         of all registered workers; it does not abort external download I/O. A new start
-        during cleanup is cancelled. Cache policy and legacy runtime selection are unchanged.</p>
+        during cleanup is cancelled. Model cache policy, registered-worker reuse and
+        TCP conflict handling are unchanged; external servers are not replaced.</p>
       </section>
       <section class="page-section" aria-labelledby="support">
       <p class="eyebrow">Go further, responsibly</p>

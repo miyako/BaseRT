@@ -2,7 +2,7 @@
 var $server : cs._server
 $server:=cs._server.new(cs.NativeProbe)
 var $options : Object
-$options:={model: $model; native_timeout: True}
+$options:={model: $model; executable: File($server.executablePath); native_timeout: True}
 $options.onStdOut:=Formula(nativeRecord(This; $1; $2; "stdout"))
 $options.onStdErr:=Formula(nativeRecord(This; $1; $2; "stderr"))
 $options.onTerminate:=Formula(nativeRecord(This; $1; $2; "termination"))

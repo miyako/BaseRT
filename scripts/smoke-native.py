@@ -18,6 +18,23 @@ def main():
     metadata = json.loads((runtime / "build-info.json").read_text())
     if metadata["engine_included"] is not False:
         raise ValueError("Source-only artifacts must not include the proprietary engine")
+    expected_files = {
+        "basert", "basert-serve", "superfluid/bin/superfluid",
+        "superfluid/bin/superfluid-workerd", "superfluid/bin/superfluid-noded",
+        "superfluid/libexec/superfluid/superfluid-worker-basert",
+        "licenses/basert/LICENSE", "licenses/basert/NOTICE",
+        "licenses/superfluid/LICENSE", "licenses/superfluid/NOTICE",
+    }
+    if set(metadata["sha256"]) != expected_files:
+        raise ValueError("Source-only manifest must contain exactly the tooling and notices")
+    files = list(runtime.rglob("*"))
+    if any(path.is_symlink() for path in files):
+        raise ValueError("Source-only stage must not contain symlinks to external/cached payloads")
+    actual_files = {path.relative_to(runtime).as_posix() for path in files if path.is_file()}
+    if actual_files != set(metadata["sha256"]) | {"build-info.json"}:
+        raise ValueError("Source-only stage contains unrecorded or missing files")
+    if (runtime / "basert-serve").read_bytes() != Path(__file__).with_name("basert-serve").read_bytes():
+        raise ValueError("Source-only basert-serve must be the repository compatibility script")
     for name, expected in metadata["sha256"].items():
         actual = hashlib.sha256((runtime / name).read_bytes()).hexdigest()
         if actual != expected:

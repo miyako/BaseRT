@@ -27,7 +27,10 @@ $chat:=cs.event.huggingface.new($home; "keisuke-miyako/Qwen3.5-2B-basert"; "Qwen
 var $models : cs.event.huggingfaces
 $models:=cs.event.huggingfaces.new([$chat])
 var $options : Object
-$options:={max_tokens: 4096; max_context: 8192}
+$options:={\
+  source_runtime: Folder("/absolute/path/to/BaseRT/.build/runtime"); \
+  engine_dir: Folder("/absolute/path/to/licensed/engine"); \
+  max_tokens: 4096; max_context: 8192}
 var $BaseRT : cs.BaseRT.BaseRT
 $BaseRT:=cs.BaseRT.BaseRT.new(8080; $models; $home; $options; $event)
 ```
@@ -38,6 +41,14 @@ Model downloads precede process launch. See [`_server`](_server.md) for
 argument construction and `basert-serve --help` for the pinned server's flags.
 Pass compatible `.base` models; do not use GGUF files, llama.cpp router INI
 files, or flags such as `n_gpu_layers`/`ctx_size`.
+
+No inference runtime is bundled. Build the open-source tooling and obtain a
+compatible licensed engine separately, or replace `source_runtime`/`engine_dir`
+with `executable: File("/absolute/path/to/licensed/runtime/basert-serve")` for
+an existing compatible installation outside the repository. The adapter does
+not download an engine or search resources/`PATH`. Missing or invalid runtime
+selection reports `onError` code 3 before launch. Existing registered-worker
+reuse and TCP conflict handling are unchanged; no external server is replaced.
 
 `event.onSuccess` currently means the worker launch was requested, not that
 the server has loaded its model or passed an HTTP health check.

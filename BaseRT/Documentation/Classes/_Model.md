@@ -21,9 +21,13 @@ launch. This is a launch notification, **not** a health/model-readiness check.
 Inspect native diagnostics and verify process/model identity through the
 selected runtime's protocol. A model listing alone may describe unloaded models.
 
-With `source_runtime` selected, `start()` first validates the runtime's launcher,
-server and worker paths and the separately supplied `engine_dir`. Invalid
-selections call `onError` (code 3), or log an error when no event object exists.
+`start()` requires either an existing external `executable : 4D.File` or
+`source_runtime : 4D.Folder` plus `engine_dir : 4D.Folder`, never both selectors.
+No inference runtime is bundled and there is no resource or `PATH` fallback.
+With `source_runtime` selected, it validates the runtime's launcher,
+server and worker paths and the separately supplied `engine_dir`. Missing,
+malformed or conflicting selections call `onError` (code 3) before launch,
+or log an error when no event object exists.
 This path validation does not establish engine ABI compatibility.
 
 See [`BaseRT`](BaseRT.md) and [`_server`](_server.md).

@@ -6,6 +6,7 @@ Class extends _Model
 
 Class constructor($port : Integer; $options : Object; $event : cs.event.event)
 	Super($port; cs.event.huggingfaces.new([]); $options; Formula(This.that.recordFailure($1; $2)); $event)
+	This.options.executable:=Folder("/RESOURCES/lifecycle").file("licensed executable fixture")
 	This.testDownloads:=[]
 	This.schedule:="deferred"
 	This.failures:=0

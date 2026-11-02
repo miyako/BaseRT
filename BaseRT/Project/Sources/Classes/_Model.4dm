@@ -130,9 +130,11 @@ Function start()
 			return
 		End if
 	End for each
+	var $message : Text
 	If (This:C1470.options.source_runtime#Null:C1517)
-		var $message : Text
 		Case of
+			: (This:C1470.options.executable#Null:C1517)
+				$message:="Select source_runtime or executable, not both."
 			: (Value type:C1509(This:C1470.options.source_runtime)#Is object:K8:27)\
 				 || (Not:C34(OB Instance of:C1731(This:C1470.options.source_runtime; 4D:C1709.Folder)))
 				$message:="source_runtime must be a Folder containing the source-built runtime."
@@ -149,20 +151,29 @@ Function start()
 			: (Not:C34(This:C1470.options.engine_dir.file("libbaseRT.dylib").exists))
 				$message:="engine_dir does not contain libbaseRT.dylib. The public source build does not include the engine."
 		End case
-		If ($message#"")
-			If (Not:C34(This:C1470._startup.finish(This:C1470.attempt; "failed")))
-				return
-			End if
-			var $error : cs:C1710.event.error
-			$error:=cs:C1710.event.error.new(3; $message)
-			If (OB Instance of:C1731(This:C1470.event; cs:C1710.event.event))\
-				 && (OB Instance of:C1731(This:C1470.event.onError; 4D:C1709.Function))
-				This:C1470.event.onError.call(This:C1470; This:C1470.options; $error)
-			Else
-				LOG EVENT:C667(Into 4D debug message:K38:5; $message)
-			End if
+	Else
+		Case of
+			: (Value type:C1509(This:C1470.options.executable)#Is object:K8:27)\
+				 || (Not:C34(OB Instance of:C1731(This:C1470.options.executable; 4D:C1709.File)))
+				$message:="BaseRT runtime is not installed. Set executable to a separately licensed basert-serve File, or select source_runtime and engine_dir. No runtime is bundled or downloaded."
+			: (Not:C34(This:C1470.options.executable.exists))
+				$message:="The selected BaseRT executable is missing. Install a separately licensed basert-serve outside the component and set executable to its File."
+		End case
+	End if
+	If ($message#"")
+		If (Not:C34(This:C1470._startup.finish(This:C1470.attempt; "failed")))
 			return
 		End if
+		var $error : cs:C1710.event.error
+		$error:=cs:C1710.event.error.new(3; $message)
+		If (OB Instance of:C1731(This:C1470.event; cs:C1710.event.event))\
+			 && (OB Instance of:C1731(This:C1470.event.onError; 4D:C1709.Function))\
+			 && ((OB Keys(This:C1470.event).includes("onError")) || (OB Class:C1730(This:C1470.event)#cs:C1710.event.event))
+			This:C1470.event.onError.call(This:C1470; This:C1470.options; $error)
+		Else
+			LOG EVENT:C667(Into 4D debug message:K38:5; $message)
+		End if
+		return
 	End if
 
 	If (Not:C34(This:C1470._startup.claim(This:C1470.attempt)))

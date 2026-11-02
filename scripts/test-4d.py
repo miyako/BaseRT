@@ -51,8 +51,9 @@ def main():
         if result.get("fatal") or result["errors"]:
             raise ValueError(f"4D regression checks failed: {result}")
         print("4D checks passed: argument separation/escaping, numeric/multi-model options, "
+              "explicit external/source-runtime selection, no cached resource fallback, "
               "source-runtime environment, adapter-only option filtering, local-model dispatch, "
-              "invalid runtime/missing-model errors, absent event object, and "
+              "missing/malformed/conflicting runtime and missing-engine/model errors, absent event object, and "
               "per-destination download/attempt failure/cancellation/stale-callback scheduling.")
         print("Controlled event/worker components were used; no model/engine was loaded.")
         diagnostics = result["syntax"].get("errors", [])

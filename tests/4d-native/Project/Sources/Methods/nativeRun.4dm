@@ -6,6 +6,7 @@ $controller.dataType:=$dataType
 $controller.timeout:=10
 var $state : Object
 $state:=$controller.state
+$options.executable:=File($server.executablePath)
 var $worker : 4D.SystemWorker
 $worker:=$server.start($options)
 nativeAssert($server.options=$options; $label+": original options identity")
