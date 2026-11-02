@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf9f6">
   <meta name="description" content="Run the BaseRT Apple Silicon inference server from a 4D application. Installation, source builds, and runtime guidance.">
   <title>BaseRT for 4D</title>
   <link rel="icon" href="assets/logo.png">
@@ -10,27 +11,65 @@
 </head>
 <body>
   <a class="skip" href="#content">Skip to content</a>
-  <div class="wrapper">
-    <header>
-      <h1><a href="./">BaseRT for 4D</a></h1>
-      <img class="logo" src="assets/logo.png" alt="BaseRT" width="96" height="96">
-      <p>Local inference on Apple Silicon.<br>A native server, managed from 4D.</p>
-      <div class="actions">
-        <a href="https://github.com/miyako/BaseRT/releases">Releases</a>
-        <a href="https://github.com/miyako/BaseRT">GitHub</a>
-        <a href="https://github.com/basecompute/baseRT">Upstream</a>
-      </div>
+    <aside class="sidebar">
+      <a class="brand" href="./" aria-label="BaseRT for 4D home">
+        <img src="assets/logo.png" alt="" width="42" height="42">
+        <span>BaseRT<small>for 4D</small></span>
+      </a>
+      <p class="sidebar-caption">Local inference.<br>Built for Apple Silicon.</p>
       <nav aria-label="Documentation">
-        <a href="#overview">Overview</a>
+        <span class="nav-label">Get started</span>
+        <a href="./" aria-current="page">Overview</a>
         <a href="#install">Installation</a>
         <a href="#quick-start">Quick start</a>
+        <a href="https://github.com/miyako/BaseRT/releases">Downloads &nearr;</a>
+        <span class="nav-label">Integrate &amp; build</span>
         <a href="#runtime">Runtime and options</a>
         <a href="build.html">Build from source</a>
         <a href="#support">Support and licensing</a>
       </nav>
-    </header>
-    <main id="content">
-      <h1 id="overview">BaseRT, inside your 4D application</h1>
+      <div class="sidebar-bottom"><span>macOS / Apple Silicon</span><a href="https://github.com/basecompute/baseRT">Powered by BaseRT &nearr;</a></div>
+    </aside>
+  <div class="workspace">
+    <header class="topbar"><span>Documentation / <strong>Overview</strong></span><a href="https://github.com/miyako/BaseRT">GitHub &nearr;</a></header>
+    <main id="content" tabindex="-1">
+      <section class="hero" aria-labelledby="overview">
+        <div class="hero-copy">
+          <p class="eyebrow">Apple Silicon / 4D integration</p>
+          <h1 id="overview">Local inference.<br><span>Native to your Mac.</span></h1>
+          <p class="lede">Bring BaseRT into your 4D application. Manage model downloads, launch a native inference server, and keep its lifecycle in your application's hands.</p>
+          <div class="actions">
+            <a class="button primary" href="#quick-start">Start with 4D &rarr;</a>
+            <a class="button" href="build.html">Build from source</a>
+          </div>
+          <p class="hero-note">macOS ARM64 &middot; Metal inference &middot; Separately licensed engine</p>
+        </div>
+        <div class="runtime-panel" role="img" aria-label="Your 4D application manages the BaseRT server, which uses a separately licensed engine and a compatible .base model on your Mac">
+          <div class="panel-heading"><span class="nav-label">Your local runtime</span><span class="tag">On your Mac</span></div>
+          <div class="runtime-node"><span class="node-mark">4D</span><div><strong>Your application</strong><small>Downloads, events and process lifecycle</small></div></div>
+          <div class="connection">Background worker / local HTTP</div>
+          <div class="runtime-node engine"><img src="assets/logo.png" alt="" width="54" height="54"><div><strong>BaseRT</strong><small>Native server + licensed Metal engine</small></div></div>
+          <div class="runtime-node model"><span class="file-mark">.base</span><div><strong>A compatible model</strong><small>Model weights obtained separately</small></div></div>
+          <p class="panel-note">Apple Silicon. Your process. Your model.</p>
+        </div>
+      </section>
+      <div class="capabilities" aria-label="Runtime requirements">
+        <span><strong>macOS ARM64</strong>component target</span>
+        <span><strong>Metal</strong>inference runtime</span>
+        <span><strong>.base</strong>model format</span>
+        <span><strong>4D</strong>process integration</span>
+      </div>
+      <section class="page-section" aria-labelledby="paths-title">
+        <p class="eyebrow">Choose your starting point</p>
+        <h2 id="paths-title">From native runtime to application.</h2>
+        <div class="cards">
+          <a class="card" href="#install"><span class="card-label">01 / Integrate with 4D</span><h3>Put the component to work &nearr;</h3><p>Install dependencies, select your runtime and model, and manage the server from your application.</p><span class="card-link">Set up the component &rarr;</span></a>
+          <a class="card" href="build.html"><span class="card-label">02 / Build the tooling</span><h3>Start with pinned sources &nearr;</h3><p>Build the launcher and HTTP server with traceable source revisions. Obtain a compatible licensed engine separately.</p><span class="card-link">Read the build guide &rarr;</span></a>
+        </div>
+      </section>
+      <section class="page-section" aria-labelledby="about-title">
+      <p class="eyebrow">Know your runtime</p>
+      <h2 id="about-title">A native engine. A 4D lifecycle.</h2>
       <p>This component wraps <a href="https://github.com/basecompute/baseRT">BaseCompute's BaseRT</a>,
         a Metal-based local inference runtime. It resolves model downloads, constructs
         <code>basert-serve</code> arguments, manages the background process, and terminates
@@ -41,6 +80,9 @@
           component builds are not provided. Model support and
           memory requirements come from the pinned upstream runtime, not this wrapper.</p>
       </div>
+      </section>
+      <section class="page-section" aria-labelledby="install">
+      <p class="eyebrow">Before you begin</p>
       <h2 id="install">Installation</h2>
       <ol>
         <li>Use a compatible 4D version (the package targets 4D 20.7 ARM; the project dependency
@@ -57,6 +99,9 @@
       <p>Without <code>source_runtime</code>, the adapter retains the bundled legacy
         <code>basert-serve</code>, falling back to <code>PATH</code> if absent. Those
         committed binaries are not claimed to be current source builds.</p>
+      </section>
+      <section class="page-section" aria-labelledby="quick-start">
+      <p class="eyebrow">From model to process</p>
       <h2 id="quick-start">Quick start</h2>
       <p>In the host application's startup code, choose a compatible upstream-format
         <code>.base</code> model. This example uses a third-party model repository;
@@ -86,6 +131,9 @@ $BaseRT:=cs.BaseRT.BaseRT.new(8080; $models; $home; $options; $event)</code></pr
       <pre><code>var $BaseRT : cs.BaseRT.BaseRT
 $BaseRT:=cs.BaseRT.BaseRT.new()
 $BaseRT.terminate()</code></pre>
+      </section>
+      <section class="page-section" aria-labelledby="runtime">
+      <p class="eyebrow">Application integration</p>
       <h2 id="runtime">Runtime and options</h2>
       <p>The first existing <code>model</code> file is positional; additional files in a
         collection use repeated <code>--model</code> arguments. Other keys map from
@@ -117,6 +165,9 @@ $BaseRT.terminate()</code></pre>
         old attempt. <code>terminate()</code> cancels pending startup and requests cleanup
         of all registered workers; it does not abort external download I/O. A new start
         during cleanup is cancelled. Cache policy and legacy runtime selection are unchanged.</p>
+      </section>
+      <section class="page-section" aria-labelledby="support">
+      <p class="eyebrow">Go further, responsibly</p>
       <h2 id="support">Support and licensing</h2>
       <p>Report component/process issues to <a href="https://github.com/miyako/BaseRT/issues">miyako/BaseRT</a>;
         report engine/model compatibility issues to
@@ -125,7 +176,9 @@ $BaseRT.terminate()</code></pre>
       <p>The wrapper uses <a href="https://github.com/miyako/BaseRT/blob/main/LICENSE">Apache-2.0</a>.
         Runtime and third-party notices must accompany native builds; see
         <a href="build.html#licensing">build licensing</a>. Model weights have their own licenses.</p>
+      </section>
     </main>
+    <footer class="site-footer"><span>BaseRT for 4D &middot; By <a href="https://github.com/miyako">miyako</a></span><span><a href="https://github.com/miyako/BaseRT/blob/main/LICENSE">Apache-2.0 wrapper</a><a href="https://github.com/miyako/BaseRT">Source code &nearr;</a></span></footer>
   </div>
 </body>
 </html>
