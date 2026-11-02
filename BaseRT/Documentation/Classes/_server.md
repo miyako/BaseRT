@@ -1,69 +1,29 @@
 # _server
-### Extends `_llama` to build and launch the `llama-server` command line.
 
-> _server.new (controller : 4D.Class)
+Extends [`_BaseRT`](_BaseRT.md) to assemble and launch `basert-serve`.
+Application code uses [`BaseRT`](BaseRT.md), not this internal class.
 
-| Parameter | Type | | Description |
-| --- | --- | --- | --- |
-| controller | 4D.Class | -> | Optional custom controller class |
+## start(option : Object) -> 4D.SystemWorker
 
-## Description
+An existing `4D.File` in `option.model` becomes the first positional model.
+A collection emits the first existing file positionally and subsequent files
+as repeated `--model` arguments. Model paths are escaped and separated from
+the executable name.
 
-`_server` extends [`_llama`](_llama.md) (with `command = "server"`) and provides the `start` method, which assembles the full `llama-server` command string from an options object and launches it via `_CLI_Controller.execute`.
+Other option names replace underscores with hyphens. Numeric and text values
+produce `--key value`; true booleans produce `--key`; existing files/folders
+produce escaped paths. Collections repeat the flag. False values are omitted.
+`model`, `help`, `version`, `onTerminate`, `onStdErr`, `onStdOut`,
+`source_runtime`, and `engine_dir` are not
+emitted as generic CLI arguments. Only pass flags accepted by the pinned
+upstream server; the wrapper is not a CLI option validator.
 
-`_server` is never instantiated directly by application code. It is managed internally by the worker infrastructure; `cs.llama.llama` delegates to it via `cs.llama.workers.worker`.
+`start` binds the termination callback, creates a temporary `HF_HUB_CACHE`
+directory, and delegates to [`_CLI_Controller`](_CLI_Controller.md).
+The returned worker indicates process creation, not HTTP/model readiness.
 
-### Methods
-
-#### start (option : Object) → 4D.SystemWorker
-
-Builds the CLI command and starts the server.
-
-| Parameter | Type | | Description |
-| --- | --- | --- | --- |
-| option | Object | -> | Server options (see [llama](llama.md) for the full property list) |
-| Result | 4D.SystemWorker | <- | The launched worker |
-
-**Argument construction rules:**
-
-| Value type | CLI form |
-| --- | --- |
-| Real / Integer | `--flag value` |
-| Text | `--flag escaped-value` |
-| Boolean `True` | `--flag` (no value) |
-| 4D.File (exists) | `--flag escaped-path` |
-| 4D.Folder (exists) | `--flag escaped-path` |
-| Collection | Flag repeated for each element |
-
-The `model` property receives special treatment: it is always emitted first as `--model <path>` before the remaining options. The keys `model`, `model_url`, `help`, and `version` are skipped in the general loop. All other option keys have underscores replaced with hyphens.
-
-**Environment variables** — before launching, `_server` creates two temporary folders and injects them as environment variables:
-
-| Variable | Purpose |
-| --- | --- |
-| `HF_HUB_CACHE` | Overrides Hugging Face cache directory |
-| `LLAMA_CACHE` | Overrides llama.cpp cache directory |
-
-Both folders are created fresh on each `start` call to prevent stale cache interference.
-
-## Examples
-
-`_server` is used indirectly via `cs.llama.llama`:
-
-```4d
-var $llama : cs.llama.llama
-$llama:=cs.llama.llama.new(8080; $huggingfaces; $homeFolder; $options; $event)
-```
-
-To terminate the server from the same (or any) context:
-
-```4d
-$llama:=cs.llama.llama.new()
-$llama.terminate()
-```
-
-## See also
-
-- [`_llama`](_llama.md) — parent class
-- [`_CLI_Controller`](_CLI_Controller.md) — executes the assembled command
-- [`_Model`](_Model.md) — calls `_server.start` after model download completes
+The optional `source_runtime : 4D.Folder` selects the source-built compatibility
+entry point without replacing the bundled legacy executable. It uses that
+folder as the working directory, sets `BASERT_LIB` from the separately licensed
+`engine_dir : 4D.Folder`, and disables automatic Superfluid installation.
+The entry point fixes `BASERT_SUPERFLUID_DIR` to the staged server.

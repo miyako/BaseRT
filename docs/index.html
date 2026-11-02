@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Run the BaseRT Apple Silicon inference server from a 4D application. Installation, source builds, and runtime guidance.">
+  <title>BaseRT for 4D</title>
+  <link rel="icon" href="assets/logo.png">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+  <div class="wrapper">
+    <header>
+      <h1><a href="./">BaseRT for 4D</a></h1>
+      <img class="logo" src="assets/logo.png" alt="BaseRT" width="96" height="96">
+      <p>Local inference on Apple Silicon.<br>A native server, managed from 4D.</p>
+      <div class="actions">
+        <a href="https://github.com/miyako/BaseRT/releases">Releases</a>
+        <a href="https://github.com/miyako/BaseRT">GitHub</a>
+        <a href="https://github.com/basecompute/baseRT">Upstream</a>
+      </div>
+      <nav aria-label="Documentation">
+        <a href="#overview">Overview</a>
+        <a href="#install">Installation</a>
+        <a href="#quick-start">Quick start</a>
+        <a href="#runtime">Runtime and options</a>
+        <a href="build.html">Build from source</a>
+        <a href="#support">Support and licensing</a>
+      </nav>
+    </header>
+    <main id="content">
+      <h1 id="overview">BaseRT, inside your 4D application</h1>
+      <p>This component wraps <a href="https://github.com/basecompute/baseRT">BaseCompute's BaseRT</a>,
+        a Metal-based local inference runtime. It resolves model downloads, constructs
+        <code>basert-serve</code> arguments, manages the background process, and terminates
+        it when your application exits. It is not llama.cpp and does not use GGUF models.</p>
+      <div class="notice">
+        <p><strong>Apple Silicon only.</strong> The supported component target is macOS ARM64.
+          The new source tooling targets macOS 15+. Windows, Linux and Intel macOS
+          component builds are not provided. Model support and
+          memory requirements come from the pinned upstream runtime, not this wrapper.</p>
+      </div>
+      <h2 id="install">Installation</h2>
+      <ol>
+        <li>Use a compatible 4D version (the package targets 4D 20.7 ARM; the project dependency
+          format is version 2100, so use 4D 21+ for source dependency resolution).</li>
+        <li>Install the component from <a href="https://github.com/miyako/BaseRT/releases">Releases</a>
+          or open the source project under <code>BaseRT/Project</code>. Binary publishing
+          requires actual upstream redistribution permission.</li>
+        <li>Resolve the declared <code>tcp</code>, <code>workers</code> and <code>event</code>
+          dependencies. They are separate components, not built-in 4D classes.</li>
+        <li><a href="build.html">Build/stage the native server</a> before compiling a component
+          and select it with the <code>source_runtime</code> option. The engine is
+          proprietary and must be obtained separately.</li>
+      </ol>
+      <p>Without <code>source_runtime</code>, the adapter retains the bundled legacy
+        <code>basert-serve</code>, falling back to <code>PATH</code> if absent. Those
+        committed binaries are not claimed to be current source builds.</p>
+      <h2 id="quick-start">Quick start</h2>
+      <p>In the host application's startup code, choose a compatible upstream-format
+        <code>.base</code> model. This example uses a third-party model repository;
+        review its license and allow enough disk space and unified memory.</p>
+      <pre><code>var $home : 4D.Folder
+$home:=Folder(fk home folder).folder(".BaseRT")
+$home.create()
+
+var $event : cs.event.event
+$event:=cs.event.event.new()
+$event.onError:=Formula(ALERT($2.message))
+
+var $chat : cs.event.huggingface
+$chat:=cs.event.huggingface.new($home; \
+  "keisuke-miyako/Qwen3.5-2B-basert"; "Qwen3.5-2B-Q8.base")
+var $models : cs.event.huggingfaces
+$models:=cs.event.huggingfaces.new([$chat])
+var $options : Object
+$options:={\
+  source_runtime: Folder("/absolute/path/to/BaseRT/.build/runtime"); \
+  engine_dir: Folder("/absolute/path/to/licensed/engine"); \
+  max_tokens: 4096; max_context: 8192}
+
+var $BaseRT : cs.BaseRT.BaseRT
+$BaseRT:=cs.BaseRT.BaseRT.new(8080; $models; $home; $options; $event)</code></pre>
+      <p>In <code>onExit</code>:</p>
+      <pre><code>var $BaseRT : cs.BaseRT.BaseRT
+$BaseRT:=cs.BaseRT.BaseRT.new()
+$BaseRT.terminate()</code></pre>
+      <h2 id="runtime">Runtime and options</h2>
+      <p>The first existing <code>model</code> file is positional; additional files in a
+        collection use repeated <code>--model</code> arguments. Other keys map from
+        <code>snake_case</code> to <code>--kebab-case</code>. Numeric/text values add an
+        argument; true booleans emit a flag. This translation does not validate
+        whether upstream accepts a flag: check the built server's <code>--help</code>.</p>
+      <p>Do not pass llama.cpp flags such as <code>n_gpu_layers</code>, <code>ctx_size</code>,
+        <code>jinja</code>, <code>models_dir</code> or <code>models_preset</code>.
+        The legacy router branches in the component are not supported BaseRT features.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Callback</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>onError</code></td><td>Port preflight or download error.</td></tr>
+            <tr><td><code>onData</code> / <code>onResponse</code></td><td>Model-download progress/completion.</td></tr>
+            <tr><td><code>onSuccess</code></td><td>Launch requested, <strong>not</strong> verified HTTP/model readiness.</td></tr>
+            <tr><td><code>onTerminate</code></td><td>The native process exited.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Wait for the server to be ready before inference. A registered worker or a free TCP
+        port alone is not proof of readiness. Detailed class behavior is documented in the
+        <a href="https://github.com/miyako/BaseRT/tree/main/BaseRT/Documentation/Classes">class reference</a>.</p>
+      <h2 id="support">Support and licensing</h2>
+      <p>Report component/process issues to <a href="https://github.com/miyako/BaseRT/issues">miyako/BaseRT</a>;
+        report engine/model compatibility issues to
+        <a href="https://github.com/basecompute/baseRT/issues">upstream</a>, including your
+        source revision, macOS/Xcode version and model information.</p>
+      <p>The wrapper uses <a href="https://github.com/miyako/BaseRT/blob/main/LICENSE">Apache-2.0</a>.
+        Runtime and third-party notices must accompany native builds; see
+        <a href="build.html#licensing">build licensing</a>. Model weights have their own licenses.</p>
+      <footer>
+        <p>A custom, dependency-free GitHub Pages site, with a responsive sidebar and code styling
+          inspired by <a href="https://miyako.github.io/llama-cpp/">llama.cpp for 4D</a>.
+          The GitHub README and this documentation have separate entry points.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

@@ -11,7 +11,7 @@
 
 `_BaseRT_Controller` is the default controller used by all `_BaseRT` subclasses. It inherits all queueing and execution behaviour from [`_CLI_Controller`](_CLI_Controller.md) and overrides only `onTerminate` to forward the termination event back to the owning `_BaseRT` instance's `onTerminate` callback.
 
-This allows application code to attach a single `onTerminate` function on the `_server` (or `BaseRT`) instance and have it called automatically when the `BaseRT-server` process exits.
+This allows application code to attach an `onTerminate` function to the `_server` instance and have it called when the `basert-serve` process exits.
 
 ### Overridden event callbacks
 
@@ -47,12 +47,13 @@ Function onData($worker : 4D.SystemWorker; $params : Object)
     LOG EVENT(Into 4D debug message; $params.data)
 ```
 
-Then pass it when constructing the server:
+Internal subclasses can pass that class to `_server.new(MyController)`.
+The public `BaseRT.new(...)` constructor does not accept a controller class.
+For public termination notifications use the event object:
 
 ```4d
+$event.onTerminate:=Formula(LOG EVENT(Into 4D debug message; "BaseRT exited"))
 $BaseRT:=cs.BaseRT.BaseRT.new($port; $huggingfaces; $homeFolder; $options; $event)
-// _BaseRT automatically detects MyController extends _BaseRT_Controller
-// and uses it in place of the default
 ```
 
 ## See also

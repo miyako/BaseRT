@@ -1,0 +1,17 @@
+{
+  "verified_at": "2026-11-02",
+  "rust_toolchain": "1.99.0",
+  "target": "aarch64-apple-darwin",
+  "macos_deployment_target": "15.0",
+  "basert": {
+    "repository": "https://github.com/basecompute/baseRT.git",
+    "revision": "e704113597cdfb98c7a925a0968a339dec7bdab1",
+    "version": "0.4.3",
+    "commit_date": "2026-10-29T16:06:58Z"
+  },
+  "superfluid": {
+    "repository": "https://github.com/basecompute/superfluid.git",
+    "revision": "b421ef5c0474d786ea46ab4a410088d625699694",
+    "version": "0.1.6"
+  }
+}

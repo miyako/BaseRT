@@ -1,0 +1,54 @@
+name: Build open-source native tooling
+
+on:
+  push:
+    branches: [main]
+    paths: ['native-sources.json', 'scripts/**', 'tests/**', '.github/workflows/build-native.yml']
+  pull_request:
+    paths: ['native-sources.json', 'scripts/**', 'tests/**', '.github/workflows/build-native.yml']
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: Clean Cargo outputs before rebuilding the pinned revisions
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check build-output preservation
+        run: python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Read pinned toolchain
+        id: source
+        run: |
+          echo "rust=$(python3 -c 'import json; print(json.load(open("native-sources.json"))["rust_toolchain"])')" >> "$GITHUB_OUTPUT"
+      - name: Install pinned Rust toolchain
+        env:
+          RUST_TOOLCHAIN: ${{ steps.source.outputs.rust }}
+        run: rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal
+      - name: Cache downloaded dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: native-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('native-sources.json') }}
+      - name: Build and smoke-test open-source tooling
+        env:
+          FORCE_REBUILD: ${{ inputs.force_rebuild }}
+        run: |
+          args=()
+          if [[ "$FORCE_REBUILD" == "true" ]]; then args+=(--force); fi
+          python3 scripts/build-native.py "${args[@]}"
+      - name: Archive only the open-source runtime
+        run: tar -czf .build/basert-open-source-macos-arm64.tar.gz -C .build/runtime .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: basert-open-source-macos-arm64
+          path: .build/basert-open-source-macos-arm64.tar.gz
+          if-no-files-found: error

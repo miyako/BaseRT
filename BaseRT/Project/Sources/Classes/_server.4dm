@@ -9,13 +9,17 @@ Function start($option : Object) : 4D:C1709.SystemWorker
 	This:C1470.bind($option; ["onTerminate"])
 	
 	var $command : Text
-	$command:=This:C1470.escape(This:C1470.executablePath)
+	If (OB Instance of:C1731($option.source_runtime; 4D:C1709.Folder))
+		$command:=This:C1470.escape(This:C1470.expand($option.source_runtime.file("basert-serve")).path)
+	Else
+		$command:=This:C1470.escape(This:C1470.executablePath)
+	End if
 	
 	Case of 
 		: (Value type:C1509($option.model)=Is object:K8:27)\
 			 && (OB Instance of:C1731($option.model; 4D:C1709.File))\
 			 && ($option.model.exists)
-			$command+=This:C1470.escape(This:C1470.expand($option.model).path)
+			$command+=" "+This:C1470.escape(This:C1470.expand($option.model).path)
 			$command+=" "
 		: (Value type:C1509($option.model)=Is collection:K8:32)
 			var $model : Variant
@@ -41,13 +45,13 @@ Function start($option : Object) : 4D:C1709.SystemWorker
 	
 	For each ($arg; OB Entries:C1720($option))
 		Case of 
-			: (["model"; "help"; "version"].includes($arg.key))
+			: (["model"; "help"; "version"; "onTerminate"; "onStdErr"; "onStdOut"; "source_runtime"; "engine_dir"].includes($arg.key))
 				continue
 		End case 
 		$valueType:=Value type:C1509($arg.value)
 		$key:=Replace string:C233($arg.key; "_"; "-"; *)
 		Case of 
-			: ($valueType=Is real:K8:4)
+			: ($valueType=Is real:K8:4) || ($valueType=Is integer:K8:5)
 				$command+=(" --"+$key+" "+String:C10($arg.value)+" ")
 			: ($valueType=Is text:K8:3)
 				$command+=(" --"+$key+" "+This:C1470.escape($arg.value)+" ")
@@ -59,10 +63,11 @@ Function start($option : Object) : 4D:C1709.SystemWorker
 				$command+=(" --"+$key+" "+This:C1470.escape(This:C1470.expand($arg.value).path))+" "
 			: ($valueType=Is collection:K8:32)
 				var $value : Variant
+				var $valueTypeValue : Integer
 				For each ($value; $arg.value)
 					$valueTypeValue:=Value type:C1509($value)
 					Case of 
-						: ($valueTypeValue=Is real:K8:4)
+						: ($valueTypeValue=Is real:K8:4) || ($valueTypeValue=Is integer:K8:5)
 							$command+=(" --"+$key+" "+String:C10($value)+" ")
 						: ($valueTypeValue=Is text:K8:3)
 							$command+=(" --"+$key+" "+This:C1470.escape($value)+" ")
@@ -84,4 +89,10 @@ Function start($option : Object) : 4D:C1709.SystemWorker
 	This:C1470.controller.variables:={\
 		HF_HUB_CACHE: $HF_HUB_CACHE.path}
 	
+	If (OB Instance of:C1731($option.source_runtime; 4D:C1709.Folder))
+		This:C1470.controller.currentDirectory:=This:C1470.expand($option.source_runtime)
+		This:C1470.controller.variables.BASERT_LIB:=This:C1470.expand($option.engine_dir).path
+		This:C1470.controller.variables.BASERT_SUPERFLUID_AUTO_INSTALL:="0"
+	End if
+
 	return This:C1470.controller.execute($command).worker

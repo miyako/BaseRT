@@ -12,9 +12,11 @@ Class constructor($port : Integer; $huggingfaces : cs:C1710.event.huggingfaces; 
 	This:C1470.event:=$event
 	This:C1470._onResponse:=$formula
 	This:C1470.options:=$options#Null:C1517 ? $options : {}
-	This:C1470.options.onTerminate:=This:C1470.event.onTerminate
-	This:C1470.options.onStdErr:=This:C1470.event.onStdErr
-	This:C1470.options.onStdOut:=This:C1470.event.onStdOut
+	If (This:C1470.event#Null:C1517) && (OB Instance of:C1731(This:C1470.event; cs:C1710.event.event))
+		This:C1470.options.onTerminate:=This:C1470.event.onTerminate
+		This:C1470.options.onStdErr:=This:C1470.event.onStdErr
+		This:C1470.options.onStdOut:=This:C1470.event.onStdOut
+	End if
 	This:C1470.options.port:=$port
 	This:C1470.offline:=False:C215
 	

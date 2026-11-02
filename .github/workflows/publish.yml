@@ -11,6 +11,11 @@ on:
       - '*/Project/Resources/**'
   workflow_dispatch:
     inputs:
+        redistribution_permission:
+            type: boolean
+            description: I have actual permission to redistribute ALL included proprietary BaseRT binaries (this acknowledgment does not grant permission)
+            required: true
+            default: false
         use_self_hosted:
             type: boolean
             description: when github hosted runners are busy
@@ -30,7 +35,19 @@ env:
   
 jobs:
 
+  authorize:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require existing redistribution permission
+        if: github.event_name != 'workflow_dispatch' || inputs.redistribution_permission != true
+        run: |
+          echo "::error::Binary publishing is blocked. Manually dispatch this workflow only after obtaining actual permission to redistribute every included proprietary BaseRT binary and explicitly acknowledging that permission."
+          exit 1
+
   publish:
+    needs: authorize
     if: ${{ github.event.inputs.use_self_hosted != 'true' }}
     permissions: write-all
     runs-on: [macos-latest]
@@ -111,6 +128,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
 
   publish-locally:
+    needs: authorize
     if: ${{ github.event.inputs.use_self_hosted == 'true' }}
     permissions: write-all
     runs-on: [self-hosted, macos]

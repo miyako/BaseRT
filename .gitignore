@@ -2,3 +2,5 @@ BaseRT/Data/*
 BaseRT/Project/DerivedData/*
 BaseRT/userPreferences.*
 dmg/*
+.build/
+__pycache__/
