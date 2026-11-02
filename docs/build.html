@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf9f6">
   <meta name="description" content="Reproducible source builds of the BaseRT launcher and tested Superfluid server, with separate proprietary engine requirements.">
   <title>Build from source &middot; BaseRT for 4D</title>
   <link rel="icon" href="assets/logo.png">
@@ -10,17 +11,17 @@
 </head>
 <body>
   <a class="skip" href="#content">Skip to content</a>
-  <div class="wrapper">
-    <header>
-      <h1><a href="./">BaseRT for 4D</a></h1>
-      <img class="logo" src="assets/logo.png" alt="BaseRT" width="96" height="96">
-      <p>Source-built open tooling.<br>A separately licensed engine.</p>
-      <div class="actions">
-        <a href="https://github.com/miyako/BaseRT">GitHub</a>
-        <a href="https://github.com/basecompute/baseRT">Upstream</a>
-      </div>
+    <aside class="sidebar">
+      <a class="brand" href="./" aria-label="BaseRT for 4D home">
+        <img src="assets/logo.png" alt="" width="42" height="42">
+        <span>BaseRT<small>for 4D</small></span>
+      </a>
+      <p class="sidebar-caption">Source-built tooling.<br>A separately licensed engine.</p>
       <nav aria-label="Build documentation">
+        <span class="nav-label">Get started</span>
         <a href="index.html">Getting started</a>
+        <a href="build.html" aria-current="page">Build from source</a>
+        <span class="nav-label">Build guide</span>
         <a href="#sources">Pinned sources</a>
         <a href="#build">Build and rebuild</a>
         <a href="#integration">4D integration</a>
@@ -28,8 +29,12 @@
         <a href="#licensing">Licensing and publishing</a>
         <a href="#pages">Pages deployment</a>
       </nav>
-    </header>
-    <main id="content">
+      <div class="sidebar-bottom"><span>macOS / Apple Silicon</span><a href="https://github.com/basecompute/baseRT">Powered by BaseRT &nearr;</a></div>
+    </aside>
+  <div class="workspace">
+    <header class="topbar"><span>Documentation / <strong>Build from source</strong></span><a href="https://github.com/miyako/BaseRT">GitHub &nearr;</a></header>
+    <main id="content" class="prose" tabindex="-1">
+      <p class="eyebrow">Reproducible tooling / explicit boundaries</p>
       <h1>Build the current server tooling</h1>
       <div class="notice">
         <p><strong>This is not a full engine source build.</strong> The public BaseRT source
@@ -152,9 +157,8 @@ python3 scripts/check-docs.py</code></pre>
         then deploys only on <code>main</code>. PR runs cannot deploy. Repository settings
         and live deployment were not changed by the implementation.</p>
       <pre><code>python3 -m http.server 8000 --directory docs</code></pre>
-      <footer><p><a href="index.html">Back to BaseRT for 4D</a> &middot;
-        <a href="https://github.com/miyako/BaseRT/blob/main/README.md">GitHub README</a></p></footer>
     </main>
+    <footer class="site-footer"><span>BaseRT for 4D &middot; By <a href="https://github.com/miyako">miyako</a></span><span><a href="index.html">Overview</a><a href="https://github.com/miyako/BaseRT/blob/main/README.md">GitHub README &nearr;</a></span></footer>
   </div>
 </body>
 </html>
