@@ -1,3 +1,6 @@
+property options : Object
+property onData; onDataError; onTerminate; onWorkerError : 4D.Function
+
 Class extends _CLI
 
 Class constructor

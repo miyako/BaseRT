@@ -6,8 +6,14 @@ Shared lifecycle base for [`BaseRT`](BaseRT.md).
 succeeds. On conflict it calls `event.onError` with error code 1 and the
 conflicting port/process information.
 
-`terminate()` obtains the registered `_server` worker through the `workers`
-component and terminates it.
+`terminate()` first invalidates all pending adapter startup tokens, including
+TCP preflight and downloads, then serializes native-worker cleanup on the
+`BaseRT` startup worker. It retains the existing all-registered-workers scope.
+Outside the startup/native-worker callback contexts it waits up to 10 seconds
+for the cleanup request, logging if still pending; callback contexts avoid
+waiting on their own worker. New attempts during cleanup are cancelled.
+Late old callbacks cannot start a server or affect a later independent run.
+External download HTTP/file operations are not aborted by this token cancellation.
 
 ```4d
 var $BaseRT : cs.BaseRT.BaseRT

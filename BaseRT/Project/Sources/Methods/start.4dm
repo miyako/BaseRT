@@ -2,7 +2,10 @@
 #DECLARE($options : Object; $formula : 4D:C1709.Function)
 
 var $model : cs:C1710._Model
-$model:=cs:C1710._Model.new($options.port; $options.huggingfaces; $options.options; $formula; $options.event)
+If ($options.attempt#Null:C1517) && (Not:C34(cs:C1710._startup.new().active($options.attempt)))
+	return
+End if
+$model:=cs:C1710._Model.new($options.port; $options.huggingfaces; $options.options; $formula; $options.event; $options.attempt)
 
 If ($model.files.length#0) && (Not:C34($model.offline))
 	$model.download()
@@ -21,9 +24,13 @@ Else
  && ($model.options.models_dir.exists))
 		$model.start()
 	Else
+		If (Not:C34(cs:C1710._startup.new().finish($model.attempt; "failed")))
+			return
+		End if
 		var $error : cs:C1710.event.error
 		$error:=cs:C1710.event.error.new(2; "No local model or downloadable model was found.")
-		If ($options.event#Null:C1517) && (OB Instance of:C1731($options.event; cs:C1710.event.event))
+		If (OB Instance of:C1731($options.event; cs:C1710.event.event))\
+			 && (OB Instance of:C1731($options.event.onError; 4D:C1709.Function))
 			$options.event.onError.call($model; $options; $error)
 		Else
 			LOG EVENT:C667(Into 4D debug message:K38:5; $error.message)

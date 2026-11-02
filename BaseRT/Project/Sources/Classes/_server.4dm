@@ -6,7 +6,31 @@ Class constructor($controller : 4D:C1709.Class)
 	
 Function start($option : Object) : 4D:C1709.SystemWorker
 	
-	This:C1470.bind($option; ["onTerminate"])
+	This:C1470.bind({onTerminate: Null:C1517}; ["onTerminate"])
+	This:C1470.options:=$option
+	This:C1470.onData:=Null:C1517
+	This:C1470.onDataError:=Null:C1517
+	This:C1470.onWorkerError:=Null:C1517
+	var $callback : Text
+	For each ($callback; ["onStdOut"; "onStdErr"; "_onWorkerError"; "onTerminate"])
+		If (Value type:C1509($option[$callback])=Is object:K8:27)\
+			 && (OB Instance of:C1731($option[$callback]; 4D:C1709.Function))
+			Case of
+				: ($callback="onStdOut")
+					This:C1470.onData:=$option[$callback]
+				: ($callback="onStdErr")
+					This:C1470.onDataError:=$option[$callback]
+				: ($callback="_onWorkerError")
+					This:C1470.onWorkerError:=$option[$callback]
+				: ($callback="onTerminate")
+					This:C1470.bind($option; ["onTerminate"])
+			End case
+		Else
+			If ($option[$callback]#Null:C1517)
+				LOG EVENT:C667(Into 4D debug message:K38:5; "BaseRT "+$callback+" must be a Function.")
+			End if
+		End if
+	End for each
 	
 	var $command : Text
 	If (OB Instance of:C1731($option.source_runtime; 4D:C1709.Folder))
@@ -45,7 +69,7 @@ Function start($option : Object) : 4D:C1709.SystemWorker
 	
 	For each ($arg; OB Entries:C1720($option))
 		Case of 
-			: (["model"; "help"; "version"; "onTerminate"; "onStdErr"; "onStdOut"; "source_runtime"; "engine_dir"].includes($arg.key))
+			: (["model"; "help"; "version"; "onTerminate"; "onStdErr"; "onStdOut"; "_onWorkerError"; "source_runtime"; "engine_dir"].includes($arg.key))
 				continue
 		End case 
 		$valueType:=Value type:C1509($arg.value)

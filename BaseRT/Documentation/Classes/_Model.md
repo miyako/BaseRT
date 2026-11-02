@@ -4,8 +4,9 @@ Extends [`_models`](_models.md) for BaseRT model resolution.
 
 The constructor resolves the files; the `start` project method dispatches
 pending downloads or launches an existing local model. This avoids starting
-twice when cached downloads finish synchronously. `onDownload(oid)` assigns a downloaded file to `options.model` when
-no model was specified, then delegates completion tracking to `_models`.
+twice when cached downloads finish synchronously. `onDownload(oid; identity;
+generation)` assigns the identified destination to `options.model` when no
+model was specified, then delegates completion tracking to `_models`.
 Use upstream-compatible `.base` weights, not llama.cpp GGUF models.
 
 `models()` returns model names and missing-file status for a file or collection
@@ -14,9 +15,11 @@ entry for existing `models_preset`/`models_dir` paths; these keys are not a
 promise of upstream CLI support and should not be used.
 
 `start()` obtains the `_server` worker, starts it with `options.port`, then
-immediately invokes `event.onSuccess`. This is a launch notification, **not**
-a health/model-readiness check. Inspect stderr/termination and poll the server
-before sending inference requests.
+invokes `event.onSuccess` once for a still-active attempt. Pending downloads,
+invalid required local files and failed/cancelled/stale attempts cannot reach
+launch. This is a launch notification, **not** a health/model-readiness check.
+Inspect native diagnostics and verify process/model identity through the
+selected runtime's protocol. A model listing alone may describe unloaded models.
 
 With `source_runtime` selected, `start()` first validates the runtime's launcher,
 server and worker paths and the separately supplied `engine_dir`. Invalid

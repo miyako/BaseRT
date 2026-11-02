@@ -43,6 +43,15 @@ files, or flags such as `n_gpu_layers`/`ctx_size`.
 the server has loaded its model or passed an HTTP health check.
 `event.onTerminate` reports process exit; monitor server output for failures.
 `onData`/`onResponse` are model-download events.
+`onStdOut`/`onStdErr` are native stream events `(worker, event)`, with the
+controller as `This`. Native execution errors are translated to
+`onError(options, error)` with code 4 and original diagnostics in `error.native`;
+that process-error notification also uses the controller receiver. Ordinary
+stderr/nonzero exits are not automatically execution errors.
+Pending downloads are correlated per destination and attempt, so equal object
+IDs, synchronous cache hits and late/duplicate callbacks cannot double-start.
+Termination also invalidates pending startup; it does not abort external
+download I/O. See [`_interface`](_interface.md) for cleanup timing.
 
 To terminate from the host application's `onExit`:
 

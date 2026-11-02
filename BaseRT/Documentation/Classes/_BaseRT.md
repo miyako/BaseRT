@@ -12,6 +12,8 @@ There is no command-name mapping to other BaseRT executables.
 | --- | --- |
 | `port : Integer` | Server port |
 | `onData`, `onDataError`, `onTerminate : 4D.Function` | Process callbacks |
+| `onWorkerError : 4D.Function` | Internal translated process-error callback `(options, event.error)` |
+| `options : Object` | Original server options for native error reporting |
 | `bind(option; properties)` | Copies named properties from an options object |
 | `worker : 4D.SystemWorker` | Current controller worker |
 | `terminate()` | Delegates to controller termination |
