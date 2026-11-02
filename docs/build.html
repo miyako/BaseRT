@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Reproducible source builds of the BaseRT launcher and tested Superfluid server, with separate proprietary engine requirements.">
+  <title>Build from source &middot; BaseRT for 4D</title>
+  <link rel="icon" href="assets/logo.png">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+  <div class="wrapper">
+    <header>
+      <h1><a href="./">BaseRT for 4D</a></h1>
+      <img class="logo" src="assets/logo.png" alt="BaseRT" width="96" height="96">
+      <p>Source-built open tooling.<br>A separately licensed engine.</p>
+      <div class="actions">
+        <a href="https://github.com/miyako/BaseRT">GitHub</a>
+        <a href="https://github.com/basecompute/baseRT">Upstream</a>
+      </div>
+      <nav aria-label="Build documentation">
+        <a href="index.html">Getting started</a>
+        <a href="#sources">Pinned sources</a>
+        <a href="#build">Build and rebuild</a>
+        <a href="#integration">4D integration</a>
+        <a href="#validation">Validation</a>
+        <a href="#licensing">Licensing and publishing</a>
+        <a href="#pages">Pages deployment</a>
+      </nav>
+    </header>
+    <main id="content">
+      <h1>Build the current server tooling</h1>
+      <div class="notice">
+        <p><strong>This is not a full engine source build.</strong> The public BaseRT source
+          builds a Rust launcher/converter. The current HTTP server is Superfluid,
+          which loads proprietary <code>libbaseRT</code>. No engine download,
+          binary replacement, or inference-model download is performed by these scripts.</p>
+      </div>
+      <h2 id="sources">Pinned, traceable sources</h2>
+      <p>Verified 2026-11-02. BaseRT's current default branch <code>main</code> and latest
+        release <code>v0.4.3</code> resolve to the same commit, dated 2026-10-29 UTC.
+        Superfluid is pinned to the release identified as tested by that launcher,
+        not independently upgraded to a moving latest release.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Component</th><th>Pin</th><th>Build products</th></tr></thead>
+          <tbody>
+            <tr><td>BaseRT 0.4.3</td><td><a href="https://github.com/basecompute/baseRT/tree/e704113597cdfb98c7a925a0968a339dec7bdab1"><code>e704113597cdfb98c7a925a0968a339dec7bdab1</code></a></td><td><code>basert</code></td></tr>
+            <tr><td>Superfluid 0.1.6</td><td><a href="https://github.com/basecompute/superfluid/tree/b421ef5c0474d786ea46ab4a410088d625699694"><code>b421ef5c0474d786ea46ab4a410088d625699694</code></a></td><td>Server, workerd, noded, BaseRT worker</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The <a href="https://github.com/miyako/BaseRT/blob/main/native-sources.json">source lock</a>
+        also pins Rust 1.99.0 and macOS deployment target 15.0. Older Rust 1.91/1.93
+        cannot compile the pinned Superfluid atomic API. The build rejects
+        non-Apple-Silicon hosts. Although upstream also supports a Linux ARM64 CUDA
+        engine, this component does not implement a Linux adapter. Windows and Intel
+        engine support must not be inferred from the Rust CLI's portability.</p>
+      <h2 id="build">Build and rebuild</h2>
+      <p>Install Git, Python 3.9+, Xcode Command Line Tools and rustup. From this repository:</p>
+      <pre><code>rustup toolchain install 1.99.0 --profile minimal
+python3 scripts/build-native.py
+python3 scripts/build-native.py --force
+python3 scripts/build-native.py --offline --jobs 4</code></pre>
+      <p>The first invocation checks out the exact source revisions and uses
+        <code>cargo build --locked --release</code>. Subsequent invocations reuse build
+        outputs; <code>--force</code> runs Cargo clean first. Offline mode requires
+        both checkouts and all locked dependencies to be cached already.
+        Dirty source checkouts and unexpected repository origins are rejected,
+        rather than silently discarding local changes.</p>
+      <pre><code>.build/runtime/
+  basert
+  basert-serve
+  superfluid/bin/superfluid
+  superfluid/bin/superfluid-workerd
+  superfluid/bin/superfluid-noded
+  superfluid/libexec/superfluid/superfluid-worker-basert
+  licenses/
+  build-info.json</code></pre>
+      <p><code>build-info.json</code> records source revisions, Cargo lockfile and output
+        SHA-256 hashes, toolchain, SDK/Xcode, host and target metadata. Rebuilding
+        on a different SDK/host is not guaranteed to be bit-identical.
+        Preserve this metadata with a deployment.</p>
+      <h2 id="integration">Select the source runtime in 4D</h2>
+      <p>Obtain a compatible engine independently and review its license before use.
+        Preserve its complete matching dylib/symlink, Metal library and notice set.
+        Do not flatten the release archive over the source build: that archive also
+        contains a prebuilt <code>basert</code>.</p>
+      <pre><code>$options:={\
+  model: $home.file("your-model.base"); \
+  source_runtime: Folder("/absolute/path/to/BaseRT/.build/runtime"); \
+  engine_dir: Folder("/absolute/path/to/licensed/engine"); \
+  max_context: 8192; max_tokens: 4096}</code></pre>
+      <p>The adapter validates the selected paths and sets <code>BASERT_LIB</code>.
+        Its compatibility entry point executes <code>basert serve</code>, selects the
+        staged Superfluid and explicit <code>SUPERFLUID_WORKER_BASERT</code>, and disables
+        auto-installation/update checks. The existing packaged
+        <code>basert-serve</code> and companion binaries are untouched. Omitting
+        <code>source_runtime</code> deliberately retains legacy behavior.</p>
+      <p>The preserved bundled engine was probed with the source-built server and
+        lacks <code>baseRT_load_tokenizer_only</code>. It is not compatible with this
+        source runtime. A compatible licensed engine must be obtained separately;
+        copying the legacy dylib is not an upgrade.</p>
+      <p>For direct CLI use, select an explicit engine and local model:</p>
+      <pre><code>export BASERT_LIB=/absolute/path/to/licensed/engine
+.build/runtime/basert-serve /absolute/path/to/model.base \
+  --host 127.0.0.1 --port 8080 --max-context 4096 --max-tokens 64</code></pre>
+      <p>Model and server state use upstream user-cache defaults unless overridden
+        with <code>BASERT_MODELS_DIR</code> and <code>BASERT_STATE_DIR</code>.
+        Keep writable state outside a signed/read-only component bundle.</p>
+      <h2 id="validation">Validation and limits</h2>
+      <pre><code>python3 scripts/smoke-native.py .build/runtime
+python3 scripts/check-docs.py</code></pre>
+      <p>The native smoke check verifies hashes, the no-engine artifact boundary,
+        CLI version/help, the compatibility entry point, exact worker selection and
+        explicit missing-engine diagnostics without an engine or
+        model download. It does <strong>not</strong> establish engine ABI compatibility,
+        model readiness, inference quality or 4D host compatibility.
+        With a licensed engine installed, inspect
+        <code>.build/runtime/superfluid/bin/superfluid runtimes --json</code>
+        and start the server with a local model. Check <code>/v1/models</code>,
+        then non-streaming and streaming <code>/v1/chat/completions</code> using
+        the returned model ID. Never substitute a free TCP port or
+        <code>onSuccess</code> for a readiness check.</p>
+      <p>The native workflow builds only open tooling on a hosted ARM64 macOS runner,
+        then uploads an artifact with notices and metadata. No engine is included and
+        no release is published. Updating pins requires rechecking upstream's tested
+        server release, engine ABI, license and CLI flags.</p>
+      <h2 id="licensing">Licensing and publishing</h2>
+      <p>The wrapper and public CLI/server source use Apache-2.0. Preserve upstream
+        LICENSE/NOTICE files; model weights and transitive dependencies have separate
+        terms. Existing bundled binaries retain their
+        <a href="https://github.com/miyako/BaseRT/blob/main/BaseRT/third%20party/LICENSE">proprietary engine license</a>.
+        The <a href="https://github.com/basecompute/baseRT/releases/tag/v0.4.3">current engine archive</a>
+        also restricts redistribution and third-party hosting. An Apache source build
+        does not remove those restrictions.</p>
+      <p>Automatic binary publishing is blocked. The legacy component release workflow
+        requires manual dispatch with a default-false permission acknowledgment asserting
+        actual permission to redistribute <em>all</em> included proprietary binaries.
+        That acknowledgment is not itself a license grant. Existing component packaging
+        does not automatically adopt this separate source-runtime output.</p>
+      <h2 id="pages">Custom Pages deployment</h2>
+      <p>This site is static HTML/CSS under <code>docs/</code>, with a separate GitHub README.
+        It adapts the light sidebar/dark code-block presentation of
+        <a href="https://miyako.github.io/llama-cpp/">llama.cpp for 4D</a> without
+        a Jekyll theme, Ruby plugins or external font dependencies. Relative asset links
+        support the <code>/BaseRT/</code> project path.</p>
+      <p>After merging, select <strong>Settings &rarr; Pages &rarr; Source: GitHub Actions</strong>
+        in this repository. The Pages workflow validates links and uploads the site,
+        then deploys only on <code>main</code>. PR runs cannot deploy. Repository settings
+        and live deployment were not changed by the implementation.</p>
+      <pre><code>python3 -m http.server 8000 --directory docs</code></pre>
+      <footer><p><a href="index.html">Back to BaseRT for 4D</a> &middot;
+        <a href="https://github.com/miyako/BaseRT/blob/main/README.md">GitHub README</a></p></footer>
+    </main>
+  </div>
+</body>
+</html>

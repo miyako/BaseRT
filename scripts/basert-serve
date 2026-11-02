@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+runtime=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+export BASERT_SUPERFLUID_DIR="$runtime/superfluid"
+export BASERT_SUPERFLUID_AUTO_INSTALL=0
+export SUPERFLUID_WORKER_BASERT="$runtime/superfluid/libexec/superfluid/superfluid-worker-basert"
+export SUPERFLUID_NO_UPDATE_CHECK=1
+
+exec "$runtime/basert" serve "$@"

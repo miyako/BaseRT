@@ -6,10 +6,6 @@ Class constructor($port : Integer; $huggingfaces : cs:C1710.event.huggingfaces; 
 	
 	Super:C1705($port; $huggingfaces; $options; $formula; $event)
 	
-	If (Not:C34(This:C1470.offline))
-		This:C1470.download()
-	End if 
-	
 Function _isRouterMode() : Boolean
 	
 	return ((OB Instance of:C1731(This:C1470.options.models_preset; 4D:C1709.File))\
@@ -25,7 +21,7 @@ Function models() : cs:C1710.event.models
 	
 	var $model : cs:C1710.event.model
 	
-	Case of 
+	Case of
 		: (Value type:C1509(This:C1470.options.model)=Is object:K8:27)
 			$model:=cs:C1710.event.model.new(This:C1470.options.model.name; Not:C34(This:C1470.options.model.exists))
 			return cs:C1710.event.models.new([$model])
@@ -39,7 +35,7 @@ Function models() : cs:C1710.event.models
 			End for each 
 			return cs:C1710.event.models.new($models)
 			
-	End case 
+	End case
 	
 Function onDownload($oid : Text)
 	
@@ -83,6 +79,37 @@ Function onDownload($oid : Text)
 	
 Function start()
 	
+	If (This:C1470.options.source_runtime#Null:C1517)
+		var $message : Text
+		Case of
+			: (Value type:C1509(This:C1470.options.source_runtime)#Is object:K8:27)\
+				 || (Not:C34(OB Instance of:C1731(This:C1470.options.source_runtime; 4D:C1709.Folder)))
+				$message:="source_runtime must be a Folder containing the source-built runtime."
+			: (Not:C34(This:C1470.options.source_runtime.file("basert-serve").exists))\
+				 || (Not:C34(This:C1470.options.source_runtime.file("basert").exists))\
+				 || (Not:C34(This:C1470.options.source_runtime.file("superfluid/bin/superfluid").exists))\
+				 || (Not:C34(This:C1470.options.source_runtime.file("superfluid/bin/superfluid-workerd").exists))\
+				 || (Not:C34(This:C1470.options.source_runtime.file("superfluid/bin/superfluid-noded").exists))\
+				 || (Not:C34(This:C1470.options.source_runtime.file("superfluid/libexec/superfluid/superfluid-worker-basert").exists))
+				$message:="source_runtime is incomplete. Run scripts/build-native.py first."
+			: (Value type:C1509(This:C1470.options.engine_dir)#Is object:K8:27)\
+				 || (Not:C34(OB Instance of:C1731(This:C1470.options.engine_dir; 4D:C1709.Folder)))
+				$message:="engine_dir must be a separately licensed BaseRT engine Folder."
+			: (Not:C34(This:C1470.options.engine_dir.file("libbaseRT.dylib").exists))
+				$message:="engine_dir does not contain libbaseRT.dylib. The public source build does not include the engine."
+		End case
+		If ($message#"")
+			var $error : cs:C1710.event.error
+			$error:=cs:C1710.event.error.new(3; $message)
+			If (This:C1470.event#Null:C1517) && (OB Instance of:C1731(This:C1470.event; cs:C1710.event.event))
+				This:C1470.event.onError.call(This:C1470; This:C1470.options; $error)
+			Else
+				LOG EVENT:C667(Into 4D debug message:K38:5; $message)
+			End if
+			return
+		End if
+	End if
+
 	var $BaseRT : cs:C1710.workers.worker
 	$BaseRT:=cs:C1710.workers.worker.new(cs:C1710._server)
 	$BaseRT.start(This:C1470.options.port; This:C1470.options)

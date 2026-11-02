@@ -1,61 +1,19 @@
 # _BaseRT
-### Extends `_CLI` to target a specific BaseRT executable.
 
-> _BaseRT.new (command : Text; class : 4D.Class)
+Extends [`_CLI`](_CLI.md) with the executable name `basert-serve`.
 
-| Parameter | Type | | Description |
-| --- | --- | --- | --- |
-| command | Text | -> | Logical command name; maps to an executable (see table below) |
-| class | 4D.Class | -> | Optional custom controller class (must extend `_BaseRT_Controller`) |
+> _BaseRT.new(class : 4D.Class)
 
-## Description
+The optional controller class must inherit from
+[`_BaseRT_Controller`](_BaseRT_Controller.md); otherwise the default is used.
+There is no command-name mapping to other BaseRT executables.
 
-`_BaseRT` extends [`_CLI`](_CLI.md) and resolves the `command` argument to the appropriate BaseRT binary name before passing it to the parent constructor. It also walks the inheritance chain of the supplied `class` to decide whether to use it as a custom controller or fall back to the default `_BaseRT_Controller`.
-
-### Command mapping
-
-| command value | Executable |
+| Member | Purpose |
 | --- | --- |
-| `"embedding"` | `BaseRT-embedding` |
-| `"gguf"` | `BaseRT-gguf` |
-| `"quantize"` | `BaseRT-quantize` |
-| `"cli"` | `BaseRT-cli` |
-| `"tokenize"` | `BaseRT-tokenize` |
-| _(any other value)_ | `BaseRT-server` |
+| `port : Integer` | Server port |
+| `onData`, `onDataError`, `onTerminate : 4D.Function` | Process callbacks |
+| `bind(option; properties)` | Copies named properties from an options object |
+| `worker : 4D.SystemWorker` | Current controller worker |
+| `terminate()` | Delegates to controller termination |
 
-### Properties
-
-In addition to properties inherited from `_CLI`:
-
-| Property | Type | Description |
-| --- | --- | --- |
-| port | Integer | Port the server is listening on |
-| onData | 4D.Function | Forwarded to the controller's `onData` handler |
-| onDataError | 4D.Function | Forwarded to the controller's `onDataError` handler |
-| onTerminate | 4D.Function | Called by `_BaseRT_Controller` when the worker terminates |
-
-### Methods
-
-#### bind (option : Object; properties : Collection) → cs.BaseRT._CLI
-
-Copies listed property names from `option` into `This`, used to bind event callbacks from an options object before execution.
-
-| Parameter | Type | | Description |
-| --- | --- | --- | --- |
-| option | Object | -> | Source object |
-| properties | Collection | -> | Property names to copy |
-| Result | cs.BaseRT._CLI | <- | `This` |
-
-#### get worker () → 4D.SystemWorker
-
-Returns the active `4D.SystemWorker` from the attached controller.
-
-#### terminate ()
-
-Delegates to `controller.terminate()`, stopping the active worker and draining the command queue.
-
-## See also
-
-- [`_CLI`](_CLI.md) — parent class
-- [`_BaseRT_Controller`](_BaseRT_Controller.md) — default controller
-- [`_server`](_server.md) — extends `_BaseRT` for `BaseRT-server`
+[`_server`](_server.md) specializes this class for server arguments.

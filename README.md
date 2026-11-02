@@ -1,68 +1,138 @@
-# BaseRT
+# BaseRT for 4D
 
-Local inference engine
+Manage a local [BaseRT](https://github.com/basecompute/baseRT) inference server
+from a 4D application: resolve model downloads, construct CLI arguments,
+launch a background worker, and stop it on exit.
 
-[BaseRT](https://github.com/basecompute/baseRT) is a high-performance, native C++ inference runtime built directly on Apple's Metal GPU API to run large language models locally on Apple Silicon. 
+[Documentation](https://miyako.github.io/BaseRT/) ·
+[Class reference](BaseRT/Documentation/Classes/BaseRT.md) ·
+[Upstream](https://github.com/basecompute/baseRT) ·
+[Releases](https://github.com/miyako/BaseRT/releases)
 
-This 4D component manages the whole lifecycle: resolving and downloading models from Hugging Face, building the `basert-serve` command line, launching it as a background process, and shutting it down cleanly when the app quits.
+## What is built from source?
 
-## Requirements
+As verified on **2026-11-02**, upstream `main` and latest release **v0.4.3**
+resolve to [`e704113597cdfb98c7a925a0968a339dec7bdab1`](https://github.com/basecompute/baseRT/commit/e704113597cdfb98c7a925a0968a339dec7bdab1),
+dated **2026-10-29 UTC**. The public Rust source builds the **`basert` launcher
+and converter**, not the proprietary inference engine.
 
-- macOS on Apple Silicon (the BaseRT engine is Metal-based; ARM is expected/checked internally)
-- 4D v20 R-series or later (uses 4D classes, `4D.SystemWorker`, `4D.HTTPRequest`, formulas, etc.)
-- The `basert-serve` executable, placed at:
+The current `basert serve` command delegates to **Superfluid**. This repository
+builds the launcher, the tested Superfluid **v0.1.6**
+([`b421ef5c0474d786ea46ab4a410088d625699694`](https://github.com/basecompute/superfluid/tree/b421ef5c0474d786ea46ab4a410088d625699694)),
+its process helpers, and the BaseRT worker from source. **Inference still requires
+a separately obtained, compatible, licensed `libbaseRT` engine and its Metal libraries.**
+There is no full engine source build in the public upstream repository.
 
-  ```
-  /RESOURCES/bin/macOS/basert-serve
-  ```
+Existing binaries in `BaseRT/Resources/bin/macOS` are preserved as a **legacy
+runtime**, not represented as current source-built binaries. Source builds are
+isolated under ignored `.build/`; selecting them is explicit.
 
-  If the binary isn't found there, the component falls back to calling `basert-serve` from `$PATH`. The component `chmod +x`'s the binary on first use.
+## Requirements and supported platforms
 
-> Windows is not currently supported — the underlying CLI wrapper returns immediately on Windows.
+| Target | Status |
+| --- | --- |
+| Apple Silicon macOS | Supported component target. New source tooling targets **macOS 15+**, ARM64. |
+| Intel macOS, Windows | Unsupported; no working engine/component builds provided. |
+| Linux ARM64 / NVIDIA GB10 (DGX Spark) | Supported by upstream engine, **not by this macOS 4D adapter/build script**. |
+| Linux x86_64, CPU-only, AMD GPU | No verified upstream BaseRT engine support. |
 
-## What's included
+The package's existing 4D build target is **20.7 ARM**. Source dependency
+resolution uses the `dependencies.json` format marked `2100`; use **4D 21+**
+for that workflow. Install the declared
+[`tcp`, `workers`, and `event`](BaseRT/Project/Sources/dependencies.json)
+components. Compatibility of the complete component on each 4D release must
+be checked in the host application.
 
-| File | Role |
-|---|---|
-| `BaseRT.4dm` | Public entry point. Checks the requested port isn't already in use, fills in sensible defaults, and starts the server via a 4D worker. |
-| `_interface.4dm` | Shared constructor/`terminate()` contract, plus the TCP pre-flight check (`_onTCP`) that reports a port conflict through the `event.onError` callback. |
-| `_CLI.4dm` | Generic wrapper around a native command-line executable: locates the binary, escapes arguments for bash/zsh or cmd.exe, and resolves the current directory. |
-| `_CLI_Controller.4dm` | Generic controller that drives a `4D.SystemWorker`: queues commands, wires up `onData` / `onDataError` / `onResponse` / `onError` / `onTerminate`, and manages worker lifecycle. |
-| `_BaseRT.4dm` / `_BaseRT_Controller.4dm` | BaseRT-specific specializations of `_CLI` / `_CLI_Controller` (executable name `basert-serve`, `port` property, termination pass-through). |
-| `_server.4dm` | Builds the actual `basert-serve` command line from an options object (model path(s), flags, key/value arguments) and starts it as a system worker. |
-| `_models.4dm` / `_Model.4dm` | Resolves model references — either local files, single/multiple Hugging Face repos, or "router mode" (a models directory / preset file) — downloads any missing weights, and calls `start()` once everything is on disk. |
-| `onStartup.4dm` | Example database method: builds a Qwen chat + embedding model configuration and starts BaseRT when the 4D app launches. |
-| `onExit.4dm` | Terminates the running BaseRT worker when the 4D app quits. |
+For native builds: Git, Python 3.9+, Xcode Command Line Tools, and
+**Rust 1.99.0** via rustup. Older Rust 1.91/1.93 cannot compile the pinned
+Superfluid's atomic API despite upstream's lower declared minimum.
+The upstream engine advertises macOS 14+, but the
+source-built server packaging here conservatively targets macOS 15.0.
+Model format/architecture and unified-memory requirements are upstream-specific:
+use compatible **`.base`** weights, not llama.cpp GGUF models.
 
-## Installation
+## Installation and source build
 
-1. Add this project as a 4D component (or copy it into `Components/` of your host database).
-2. Call `cs.BaseRT.BaseRT.new(...)` from `onStartup` (see below), and `cs.BaseRT.BaseRT.new().terminate()` from `onExit`.
+1. Add this repository as a 4D component, or install a component release into
+   your host's `Components/` directory. Resolve its component dependencies.
+2. Obtain the BaseRT engine separately from
+   [upstream v0.4.3](https://github.com/basecompute/baseRT/releases/tag/v0.4.3),
+   review its license, and retain its matching libraries, Metal files, LICENSE
+   and NOTICE together. This repository does **not** download or redistribute it.
+3. Build the public native tooling:
 
-## Basic usage
+   ```sh
+   rustup toolchain install 1.99.0 --profile minimal
+   python3 scripts/build-native.py
+   ```
+
+4. Set `source_runtime` and `engine_dir` in the 4D options below. Without
+   `source_runtime`, the adapter continues using the preserved legacy
+   `/RESOURCES/bin/macOS/basert-serve` (or `basert-serve` on `PATH`).
+
+Build output is `.build/runtime/`. It contains a compatibility `basert-serve`
+shell entry point that executes the source-built **`basert serve`**, plus the
+source-built Superfluid server/worker, upstream notices and `build-info.json`.
+No engine or legacy companion tools are copied into it.
+The metadata records exact Git revisions, Cargo lockfile and output hashes,
+Rust/Cargo, Xcode/SDK, deployment target and host macOS.
+
+```sh
+python3 scripts/build-native.py --force          # clean both Cargo workspaces
+python3 scripts/build-native.py --offline        # existing sources/cache only
+python3 scripts/build-native.py --jobs 4          # bound build parallelism
+python3 scripts/smoke-native.py .build/runtime   # no engine/model downloads
+python3 -m unittest discover -s tests -p 'test_*.py'
+```
+
+Pins are maintained in [`native-sources.json`](native-sources.json). To update,
+verify upstream `main`, latest release, tested Superfluid/engine compatibility
+and licenses; update full SHAs/versions/toolchain deliberately, then rebuild.
+Do not use a floating “latest” engine or silently replace the source-built CLI
+with the prebuilt `basert` inside an engine archive. A locked build is traceable,
+not a claim of byte-for-byte identical output across different SDKs/hosts.
+
+For adapter regression checks with a local 4D 21+ utility runtime:
+
+```sh
+python3 scripts/test-4d.py --tool4d /path/to/tool4d.app/Contents/MacOS/tool4d
+```
+
+This runs production command construction and local-model dispatch against
+controlled event/worker test components. It does not load an engine or replace
+full host-application/inference testing.
+
+## Quick start
+
+Use an existing, compatible local `.base` file. In the host application's startup
+code, replace these absolute paths with your own:
 
 ```4d
-var $BaseRT : cs.BaseRT.BaseRT
-var $homeFolder : 4D.Folder
-$homeFolder:=Folder(fk home folder).folder(".BaseRT")
+var $home : 4D.Folder
+$home:=Folder(fk home folder).folder(".BaseRT")
+$home.create()
 
 var $event : cs.event.event
 $event:=cs.event.event.new()
 $event.onError:=Formula(ALERT($2.message))
-
-var $chat : cs.event.huggingface
-$chat:=cs.event.huggingface.new($homeFolder.folder("Qwen"); "keisuke-miyako/Qwen3.5-2B-basert"; "Qwen3.5-2B-Q8.base")
-
-var $huggingfaces : cs.event.huggingfaces
-$huggingfaces:=cs.event.huggingfaces.new([$chat])
+$event.onTerminate:=Formula(LOG EVENT(Into 4D debug message; "BaseRT exited"))
 
 var $options : Object
-$options:={max_tokens: 4096; max_context: 8192}
+$options:={\
+  model: $home.file("Qwen3.5-2B-Q8.base"); \
+  source_runtime: Folder("/absolute/path/to/BaseRT/.build/runtime"); \
+  engine_dir: Folder("/absolute/path/to/licensed/engine"); \
+  max_tokens: 4096; max_context: 8192}
 
-$BaseRT:=cs.BaseRT.BaseRT.new(8080; $huggingfaces; $homeFolder; $options; $event)
+var $BaseRT : cs.BaseRT.BaseRT
+$BaseRT:=cs.BaseRT.BaseRT.new(8080; Null; $home; $options; $event)
 ```
 
-On termination (e.g. in `onExit`):
+Alternatively, supply `cs.event.huggingfaces` references to download missing
+models; see the [class example](BaseRT/Documentation/Classes/BaseRT.md).
+Review the model provider's license independently.
+
+In the host application's `onExit`:
 
 ```4d
 var $BaseRT : cs.BaseRT.BaseRT
@@ -70,44 +140,57 @@ $BaseRT:=cs.BaseRT.BaseRT.new()
 $BaseRT.terminate()
 ```
 
-### How it starts up
+### Options and lifecycle
 
-1. `BaseRT.new(...)` checks whether the given port is already bound; if so, `event.onError` fires and nothing else happens.
-2. If the port is free, it resolves the model(s) referenced by `huggingfaces` (or a local `model` file/folder passed in `options`), downloading anything missing from Hugging Face and reporting progress through `event.onData` / `event.onResponse`.
-3. Once all files are on disk, `_server.start()` translates the `options` object into `basert-serve` command-line flags (any `snake_case` key becomes a `--kebab-case` flag; `File`/`Folder` values, booleans, numbers, and collections are all handled) and launches it as a `4D.SystemWorker`.
-4. `event.onSuccess` fires with the resolved model list once the server is up.
+The adapter passes the first model positionally and additional model files as
+repeated `--model` arguments. Other keys translate from `snake_case` into
+`--kebab-case`; true booleans emit flags. `source_runtime` and `engine_dir`
+are adapter-only `4D.Folder` options, never CLI flags.
+The source-runtime wrapper fixes `BASERT_SUPERFLUID_DIR` and disables automatic
+Superfluid installation/update checks, and explicitly selects the staged
+`SUPERFLUID_WORKER_BASERT`; the adapter sets `BASERT_LIB` to `engine_dir`.
+The engine must expose the ABI required by Superfluid; a matching filename
+alone does not establish compatibility. The preserved bundled engine was
+probed and lacks `baseRT_load_tokenizer_only`, so it cannot serve with the new
+source runtime. Obtain a compatible licensed engine separately; do not copy
+the old dylib into the new stage.
 
-### Options object
+Check `.build/runtime/basert-serve --help` for actual server options. Current
+upstream defaults to port **8453**; this 4D adapter explicitly supplies **8080**
+unless a different valid port is passed. Do not copy llama.cpp flags such as
+`ctx_size`, `n_gpu_layers`, `jinja`, `models_dir`, or `models_preset`.
+The legacy router branches are not supported BaseRT features.
 
-Any key in the `options` object passed to `BaseRT.new()` is turned into a `basert-serve` command-line argument, for example:
+`onData`/`onResponse` describe model downloads; `onError` reports preflight,
+selection or download failures; `onTerminate` reports process exit.
+**`onSuccess` currently means launch requested, not HTTP/model readiness.**
+Check runtime diagnostics and poll `/v1/models` before sending requests.
+Superfluid provides an OpenAI-style `/v1/chat/completions` endpoint; use the
+model ID actually returned by `/v1/models`. Configure `api_key` for access
+beyond a trusted local application.
 
-```4d
-$options:={\
-  model: [$folder.file("chat.gguf"); $folder.file("embeddings.gguf")]; \
-  log_file: $logFile; \
-  max_tokens: 4096; \
-  max_context: 8192}
-```
+## Automation, Pages, and licensing
 
-becomes:
+- [`build-native.yml`](.github/workflows/build-native.yml) builds pinned open
+  tooling and uploads a source-only artifact, with CLI help/version checks.
+  It does not publish releases or include the engine.
+- [`publish.yml`](.github/workflows/publish.yml) retains legacy 4D packaging,
+  signing and release steps, but **automatic binary publishing is blocked**.
+  Manual dispatch requires an explicit, default-false acknowledgment that
+  actual permission to redistribute **all** included proprietary binaries
+  has already been obtained. Checking the box does not grant that permission.
+  This workflow does not migrate the legacy bundled engine.
+- [`pages.yml`](.github/workflows/pages.yml) validates and deploys the custom
+  static [`docs/`](docs/) site on `main`; pull requests only validate/upload.
+  Enable **Settings → Pages → Source: GitHub Actions** manually. No repository
+  setting is changed by this patch. Preview with
+  `python3 -m http.server 8000 --directory docs`; check links with
+  `python3 scripts/check-docs.py`. No Jekyll/theme/README-as-homepage build is used.
 
-```
-basert-serve <chat.gguf> --model <embeddings.gguf> --log-file <path> --max-tokens 4096 --max-context 8192
-```
-
-`model`, `help`, and `version` are handled specially and never emitted as generic flags. Reserved keys `models_dir` / `models_preset` put the server into "router mode," serving whatever models are found in a folder or listed in a preset file rather than a single fixed model.
-
-### Events
-
-`cs.event.event` accepts formulas/functions for:
-
-- `onError($params; $error)` — port conflict or other startup failure
-- `onSuccess($params; $models)` — server is up and serving these models
-- `onData($request; $event)` — Hugging Face download progress
-- `onResponse($request; $event)` — a download finished
-- `onTerminate($worker; $params)` — the `basert-serve` process exited
-
-## Credits
-
-- Native runtime: [BaseRT](https://www.basecompute.co) — a Metal-based local inference engine for Apple Silicon.
-- This repository provides the 4D-side glue (process management, model resolution/downloading, event wiring) to run BaseRT as an embedded local LLM server inside a 4D application.
+The wrapper and public launcher/server source use **Apache-2.0**; retain their
+licenses and notices. This does **not** relicense existing binary assets.
+[`BaseRT/third party/LICENSE`](BaseRT/third%20party/LICENSE) governs the legacy
+engine, and the current v0.4.3 engine archive also has a proprietary license
+restricting redistribution and third-party hosting. Obtain appropriate
+permission before shipping or exposing the engine to others. Model weights
+and other dependencies have their own terms.

@@ -1,10 +1,10 @@
 {
   "name": "BaseRT",
-  "description": "Local inference engine",
+  "description": "4D component for the BaseRT Apple Silicon inference server",
   "author": [
     "Keisuke Miyako <keisuke.miyako@4D.com>"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": "https://github.com/miyako/BaseRT",
   "version": "20.0.3",
   "tool": {
