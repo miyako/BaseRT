@@ -1,4 +1,5 @@
 ON ERR CALL("catchError")
+testCheckpoint("command baseline")
 var $errors : Collection
 $errors:=[]
 var $root : 4D.Folder
@@ -84,10 +85,26 @@ start({port: 8080; huggingfaces: cs.event.huggingfaces.new([]); options: {model:
 If ($worker.calls#3)
 	$errors.push("Null event object prevented local model start")
 End if
+testCheckpoint("lifecycle baseline")
+$errors.combine(lifecycleChecks())
+testCheckpoint("compiler syntax-only check")
+var $syntax : Object
+$syntax:=Compile project({targets: []; typeInference: "all"})
+If (Not($syntax.success))
+	$errors.push("Compiler syntax-only check failed")
+End if
+var $diagnostic : Object
+If (Value type($syntax.errors)=Is collection)
+	For each ($diagnostic; $syntax.errors)
+		If ($diagnostic.isError)
+			$errors.push(JSON Stringify($diagnostic))
+		End if
+	End for each
+End if
 var $resultPath : Text
 var $parameter : Integer
 $parameter:=Get database parameter(User param value; $resultPath)
-File($resultPath).setText(JSON Stringify({errors: $errors; command: $command}))
+File($resultPath).setText(JSON Stringify({errors: $errors; command: $command; syntax: $syntax}))
 $model.delete()
 $second.delete()
 For each ($name; $runtimeFiles)

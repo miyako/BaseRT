@@ -14,12 +14,17 @@ Other option names replace underscores with hyphens. Numeric and text values
 produce `--key value`; true booleans produce `--key`; existing files/folders
 produce escaped paths. Collections repeat the flag. False values are omitted.
 `model`, `help`, `version`, `onTerminate`, `onStdErr`, `onStdOut`,
-`source_runtime`, and `engine_dir` are not
+the internal `_onWorkerError` bridge, `source_runtime`, and `engine_dir` are not
 emitted as generic CLI arguments. Only pass flags accepted by the pinned
 upstream server; the wrapper is not a CLI option validator.
 
-`start` binds the termination callback, creates a temporary `HF_HUB_CACHE`
+`start` maps callable `onStdOut`/`onStdErr` options to native
+`onData`/`onDataError`, binds termination and the internal execution-error
+bridge, creates a temporary `HF_HUB_CACHE`
 directory, and delegates to [`_CLI_Controller`](_CLI_Controller.md).
+Missing stream/error aliases are reset on each start so reuse cannot retain a
+previous subscriber; malformed non-null aliases are diagnosed. The lower-level
+`_BaseRT` native properties remain available for direct controller execution.
 The returned worker indicates process creation, not HTTP/model readiness.
 
 The optional `source_runtime : 4D.Folder` selects the source-built compatibility

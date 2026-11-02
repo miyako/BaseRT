@@ -99,16 +99,24 @@ $BaseRT.terminate()</code></pre>
         <table>
           <thead><tr><th>Callback</th><th>Meaning</th></tr></thead>
           <tbody>
-            <tr><td><code>onError</code></td><td>Port preflight or download error.</td></tr>
+            <tr><td><code>onError(options, error)</code></td><td>Preflight, selection, download or native execution error. Code 4 retains native diagnostics in <code>error.native</code>.</td></tr>
             <tr><td><code>onData</code> / <code>onResponse</code></td><td>Model-download progress/completion.</td></tr>
+            <tr><td><code>onStdOut</code> / <code>onStdErr</code></td><td>Native output <code>(worker, event)</code>, with the controller as receiver. Stderr is not automatically fatal.</td></tr>
             <tr><td><code>onSuccess</code></td><td>Launch requested, <strong>not</strong> verified HTTP/model readiness.</td></tr>
             <tr><td><code>onTerminate</code></td><td>The native process exited.</td></tr>
           </tbody>
         </table>
       </div>
       <p>Wait for the server to be ready before inference. A registered worker or a free TCP
-        port alone is not proof of readiness. Detailed class behavior is documented in the
+        port alone is not proof of readiness. Verify process/model identity;
+        <code>/v1/models</code> may list unloaded models. Native error callbacks use
+        the controller receiver, not the download receiver. Detailed class behavior is documented in the
         <a href="https://github.com/miyako/BaseRT/tree/main/BaseRT/Documentation/Classes">class reference</a>.</p>
+      <p>Startup completes downloads per destination and attempt, including synchronous
+        cache hits. Duplicate, failed, cancelled or stale completions cannot launch an
+        old attempt. <code>terminate()</code> cancels pending startup and requests cleanup
+        of all registered workers; it does not abort external download I/O. A new start
+        during cleanup is cancelled. Cache policy and legacy runtime selection are unchanged.</p>
       <h2 id="support">Support and licensing</h2>
       <p>Report component/process issues to <a href="https://github.com/miyako/BaseRT/issues">miyako/BaseRT</a>;
         report engine/model compatibility issues to

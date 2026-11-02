@@ -96,11 +96,24 @@ For adapter regression checks with a local 4D 21+ utility runtime:
 
 ```sh
 python3 scripts/test-4d.py --tool4d /path/to/tool4d.app/Contents/MacOS/tool4d
+python3 scripts/test-4d-native.py --tool4d /path/to/tool4d.app/Contents/MacOS/tool4d
 ```
 
-This runs production command construction and local-model dispatch against
-controlled event/worker test components. It does not load an engine or replace
-full host-application/inference testing.
+The first suite runs command construction, local-model dispatch and deterministic
+download scheduling against controlled event/worker components. It covers inline
+cache hits, distinct destinations sharing a provider object ID, duplicate,
+failed, cancelled and stale completions. It also runs compiler syntax-only
+checking of its fixture, including the public constructor and TCP dispatcher.
+The native suite uses the production controller and harmless OS children for
+stream routing, callback identities and worker reuse. Native-shaped error
+translation and an error-without-response lifecycle are explicitly controlled
+probes, not observed OS error callbacks. On tool4d 21 R4.100208, a nonexistent
+executable throws before callbacks; Blob stderr events are empty text while
+`responseError` retains the bytes. These limitations are reported, not hidden.
+Add `--check-logs` to the native command on macOS to verify exactly one fallback
+diagnostic and none for a subscribed error, using a narrowly filtered live log.
+Neither suite loads an engine or replaces resolved-component, host-application,
+older 20.7-target compatibility or inference testing.
 
 ## Quick start
 
@@ -161,13 +174,36 @@ unless a different valid port is passed. Do not copy llama.cpp flags such as
 `ctx_size`, `n_gpu_layers`, `jinja`, `models_dir`, or `models_preset`.
 The legacy router branches are not supported BaseRT features.
 
-`onData`/`onResponse` describe model downloads; `onError` reports preflight,
-selection or download failures; `onTerminate` reports process exit.
+`onData`/`onResponse` describe model downloads. `onStdOut`/`onStdErr` receive
+native process output as `(worker, event)`, with `This` set to the controller;
+stderr is not automatically a fatal error. `onError(options, error)` reports
+preflight, selection, download or native execution failures. Native execution
+errors use code **4**, retain diagnostics in `error.native` (`pid`, `errors`,
+`event`), and use the controller receiver. Other error receivers are unchanged.
+This is not a raw alias of SystemWorker's differently shaped `onError`.
+Without a callable native-error subscriber, diagnostics are logged; the
+pinned event class's empty default handler is not treated as a subscription.
+`onTerminate` reports process exit, including ordinary nonzero exits.
 **`onSuccess` currently means launch requested, not HTTP/model readiness.**
-Check runtime diagnostics and poll `/v1/models` before sending requests.
+It can be followed by a later native execution error or termination.
+Check the selected runtime's diagnostics/protocol and verify that responses
+belong to your process/model before sending requests. `/v1/models` can list
+unloaded models and is not, alone, proof of model readiness or inference.
 Superfluid provides an OpenAI-style `/v1/chat/completions` endpoint; use the
 model ID actually returned by `/v1/models`. Configure `api_key` for access
 beyond a trusted local application.
+
+Downloads are tracked per destination and startup attempt, not just provider
+object ID. All required files must complete before one launch request. Failed,
+cancelled, duplicate or superseded completions cannot launch an old attempt.
+`terminate()` also cancels pending startup/TCP/download attempts, then requests
+termination of all registered workers. Cleanup is serialized on the startup
+worker; callers outside startup/native-worker callbacks wait up to 10 seconds
+for that request, with an explicit diagnostic on timeout. A start requested
+during cleanup is cancelled; retry after termination completes. This prevents
+late startup, but does not abort HTTP transfers/file writes or progress callbacks
+owned by the external download component. Cache reuse remains size-only on
+`main`; no model pinning, checksum policy or cache migration is introduced.
 
 ## Automation, Pages, and licensing
 

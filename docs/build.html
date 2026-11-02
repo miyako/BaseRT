@@ -121,7 +121,8 @@ python3 scripts/check-docs.py</code></pre>
         <code>.build/runtime/superfluid/bin/superfluid runtimes --json</code>
         and start the server with a local model. Check <code>/v1/models</code>,
         then non-streaming and streaming <code>/v1/chat/completions</code> using
-        the returned model ID. Never substitute a free TCP port or
+        the returned model ID. Verify ownership of that server/model; a listing
+        can include unloaded models and is not inference proof. Never substitute a free TCP port or
         <code>onSuccess</code> for a readiness check.</p>
       <p>The native workflow builds only open tooling on a hosted ARM64 macOS runner,
         then uploads an artifact with notices and metadata. No engine is included and

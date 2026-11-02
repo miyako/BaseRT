@@ -2,6 +2,8 @@ property port : Integer
 property onData : 4D:C1709.Function
 property onDataError : 4D:C1709.Function
 property onTerminate : 4D:C1709.Function
+property onWorkerError : 4D:C1709.Function
+property options : Object
 
 Class extends _CLI
 
