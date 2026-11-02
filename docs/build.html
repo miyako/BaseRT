@@ -100,10 +100,15 @@ python3 scripts/build-native.py --offline --jobs 4</code></pre>
       <p>The adapter validates the selected paths and sets <code>BASERT_LIB</code>.
         Its compatibility entry point executes <code>basert serve</code>, selects the
         staged Superfluid and explicit <code>SUPERFLUID_WORKER_BASERT</code>, and disables
-        auto-installation/update checks. The existing packaged
-        <code>basert-serve</code> and companion binaries are untouched. Omitting
-        <code>source_runtime</code> deliberately retains legacy behavior.</p>
-      <p>The preserved bundled engine was probed with the source-built server and
+        auto-installation/update checks. No inference runtime is bundled. Alternatively,
+        select <code>executable: File("/absolute/path/to/licensed/runtime/basert-serve")</code>
+        for an independently obtained compatible server, instead of
+        <code>source_runtime</code>. Keep it and its matching libraries/notices outside
+        the repository/component. The adapter uses its parent as working directory,
+        does not change installed files/permissions and never searches resources or
+        <code>PATH</code>. Missing/invalid or conflicting selectors report
+        <code>onError</code> code 3 before launch.</p>
+      <p>The removed legacy engine was previously probed with the source-built server and
         lacks <code>baseRT_load_tokenizer_only</code>. It is not compatible with this
         source runtime. A compatible licensed engine must be obtained separately;
         copying the legacy dylib is not an upgrade.</p>
@@ -136,16 +141,29 @@ python3 scripts/check-docs.py</code></pre>
       <h2 id="licensing">Licensing and publishing</h2>
       <p>The wrapper and public CLI/server source use Apache-2.0. Preserve upstream
         LICENSE/NOTICE files; model weights and transitive dependencies have separate
-        terms. Existing bundled binaries retain their
-        <a href="https://github.com/miyako/BaseRT/blob/main/BaseRT/third%20party/LICENSE">proprietary engine license</a>.
+        terms. The
+        <a href="https://github.com/miyako/BaseRT/blob/main/BaseRT/third%20party/LICENSE">proprietary engine license</a>
+        is retained as a record for the removed engine dylib, Metal libraries and
+        six <code>basert-*</code> runtime executables. It explicitly distinguishes the
+        open-source <code>basert</code> launcher, which is retained along with the
+        unrelated 4D bridge library.
         The <a href="https://github.com/basecompute/baseRT/releases/tag/v0.4.3">current engine archive</a>
         also restricts redistribution and third-party hosting. An Apache source build
         does not remove those restrictions.</p>
-      <p>Automatic binary publishing is blocked. The legacy component release workflow
-        requires manual dispatch with a default-false permission acknowledgment asserting
-        actual permission to redistribute <em>all</em> included proprietary binaries.
-        That acknowledgment is not itself a license grant. Existing component packaging
-        does not automatically adopt this separate source-runtime output.</p>
+      <p>Legacy component publishing is unconditionally blocked, including manual dispatch.
+        No acknowledgment bypass remains; a future wrapper-only release pipeline needs
+        separate review. The open-source tooling build remains available and does not
+        automatically become a component release. Run
+        <code>python3 scripts/check-distribution.py</code> before source packaging.
+        CI rejects engine assets, archives, symlinks and unreviewed native payloads,
+        including stale/ignored component resources. Known engine paths are also ignored
+        by Git; keep licensed installations outside the repository. Source-tooling
+        artifacts reject engine assets, symlinks and unrecorded cached files.</p>
+      <p>This current-tree removal does not purge Git history, historical tags or existing
+        release assets. Tag <code>20.0.3</code> still contains the removed files;
+        releases <code>20.0.1</code>&ndash;<code>20.0.3</code> have ZIP/DMG assets requiring
+        separate review. Those assets were not downloaded, inspected or changed.
+        An acknowledgment cannot grant redistribution rights.</p>
       <h2 id="pages">Custom Pages deployment</h2>
       <p>This site is static HTML/CSS under <code>docs/</code>, with a separate GitHub README.
         It adapts the light sidebar/dark code-block presentation of

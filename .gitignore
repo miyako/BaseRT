@@ -4,3 +4,13 @@ BaseRT/userPreferences.*
 dmg/*
 .build/
 __pycache__/
+# Licensed engine installations belong outside this repository.
+**/libbaseRT*
+**/*.metallib
+**/basert-bench
+**/basert-chat
+**/basert-complete
+**/basert-inspect
+**/basert-serve
+**/basert-transcribe
+!scripts/basert-serve

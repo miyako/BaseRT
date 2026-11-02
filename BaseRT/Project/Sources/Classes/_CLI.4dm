@@ -16,29 +16,8 @@ Class constructor($executableName : Text; $controller : 4D:C1709.Class)
 			return 
 	End case 
 	
-	This:C1470._currentDirectory:=This:C1470.expand(Folder:C1567("/RESOURCES/bin").folder(This:C1470.platform))
-	
-	This:C1470._executableFile:=File:C1566(This:C1470.currentDirectory.file(This:C1470.executableName).path)
-	
-	If (This:C1470._executableFile.exists)
-		
-		//the executable is in /RESOURCES/bin/{platform}
-		
-		Case of 
-			: (Is macOS:C1572)
-				This:C1470._executablePath:=This:C1470.currentDirectory.file(This:C1470.executableName).path
-			: (Is Windows:C1573)
-				This:C1470._executablePath:=This:C1470.currentDirectory.file(This:C1470.executableName).platformPath
-		End case 
-		
-		This:C1470._chmod()
-		
-	Else 
-		
-		//the executable is not in /RESOURCES/bin/{platform} depend on $PATH
-		
-		This:C1470._executablePath:=This:C1470.executableName
-	End if 
+	This:C1470._currentDirectory:=This:C1470.expand(Folder:C1567(Temporary folder:C486; fk platform path:K87:2))
+	This:C1470._executablePath:=This:C1470.executableName
 	
 	If ($controller=Null:C1517)
 		This:C1470._controller:=cs:C1710._CLI_Controller.new(This:C1470)  //default controller
@@ -139,16 +118,6 @@ Function quote($in : Text)->$out : Text
 	$out:="\""+$in+"\""
 	
 	//MARK:-private methods
-	
-Function _chmod()
-	
-	If (Is macOS:C1572)
-		//If (Application type=4D Remote mode)
-		SET ENVIRONMENT VARIABLE:C812("_4D_OPTION_CURRENT_DIRECTORY"; This:C1470.currentDirectory.platformPath)
-		SET ENVIRONMENT VARIABLE:C812("_4D_OPTION_BLOCKING_EXTERNAL_PROCESS"; "true")
-		LAUNCH EXTERNAL PROCESS:C811("chmod +x "+This:C1470.executableName)
-		//End if 
-	End if 
 	
 Function _isArm()->$isArm : Boolean
 	

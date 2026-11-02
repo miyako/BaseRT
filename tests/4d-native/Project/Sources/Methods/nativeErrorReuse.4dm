@@ -2,7 +2,7 @@
 var $server : cs._server
 $server:=cs._server.new(cs.NativeProbe)
 var $options : Object
-$options:={model: $model}
+$options:={model: $model; executable: File($server.executablePath)}
 $options.onTerminate:=Formula(nativeRecord(This; $1; $2; "termination"))
 $options._onWorkerError:=Formula(nativeRecordError(This; $1; $2))
 var $controller : cs.NativeProbe

@@ -14,7 +14,7 @@ Other option names replace underscores with hyphens. Numeric and text values
 produce `--key value`; true booleans produce `--key`; existing files/folders
 produce escaped paths. Collections repeat the flag. False values are omitted.
 `model`, `help`, `version`, `onTerminate`, `onStdErr`, `onStdOut`,
-the internal `_onWorkerError` bridge, `source_runtime`, and `engine_dir` are not
+the internal `_onWorkerError` bridge, `executable`, `source_runtime`, and `engine_dir` are not
 emitted as generic CLI arguments. Only pass flags accepted by the pinned
 upstream server; the wrapper is not a CLI option validator.
 
@@ -27,8 +27,15 @@ previous subscriber; malformed non-null aliases are diagnosed. The lower-level
 `_BaseRT` native properties remain available for direct controller execution.
 The returned worker indicates process creation, not HTTP/model readiness.
 
-The optional `source_runtime : 4D.Folder` selects the source-built compatibility
-entry point without replacing the bundled legacy executable. It uses that
+Choose `executable : 4D.File` for an independently installed, compatible,
+separately licensed `basert-serve`, or `source_runtime : 4D.Folder` for the
+source-built compatibility entry point. No inference runtime is bundled.
+The external executable uses its parent as working directory; the adapter
+never changes its permissions or searches component resources or `PATH`.
+Without a selector this internal method logs a diagnostic and returns Null.
+Public startup additionally validates selectors/files and reports error code 3.
+
+The source-runtime selection uses that
 folder as the working directory, sets `BASERT_LIB` from the separately licensed
 `engine_dir : 4D.Folder`, and disables automatic Superfluid installation.
 The entry point fixes `BASERT_SUPERFLUID_DIR` to the staged server.

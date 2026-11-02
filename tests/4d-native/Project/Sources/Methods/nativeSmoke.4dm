@@ -77,6 +77,7 @@ nativeAssert($controller.state.callbackErrors=1; "Fallback onError invoked a sta
 var $missing : cs._server
 $missing:=cs._server.new(cs.NativeProbe)
 $missing._executablePath:=File($resultPath).parent.file("does-not-exist").path
+$options.executable:=File($missing.executablePath)
 $missing.controller.timeout:=10
 ON ERR CALL("nativeCatchLaunchError")
 $worker:=$missing.start($options)

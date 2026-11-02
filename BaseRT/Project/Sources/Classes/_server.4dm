@@ -36,7 +36,12 @@ Function start($option : Object) : 4D:C1709.SystemWorker
 	If (OB Instance of:C1731($option.source_runtime; 4D:C1709.Folder))
 		$command:=This:C1470.escape(This:C1470.expand($option.source_runtime.file("basert-serve")).path)
 	Else
-		$command:=This:C1470.escape(This:C1470.executablePath)
+		If (OB Instance of:C1731($option.executable; 4D:C1709.File))
+			$command:=This:C1470.escape(This:C1470.expand($option.executable).path)
+		Else
+			LOG EVENT:C667(Into 4D debug message:K38:5; "BaseRT runtime is not selected. Set executable or source_runtime; no runtime is bundled.")
+			return Null:C1517
+		End if
 	End if
 	
 	Case of 
@@ -69,7 +74,7 @@ Function start($option : Object) : 4D:C1709.SystemWorker
 	
 	For each ($arg; OB Entries:C1720($option))
 		Case of 
-			: (["model"; "help"; "version"; "onTerminate"; "onStdErr"; "onStdOut"; "_onWorkerError"; "source_runtime"; "engine_dir"].includes($arg.key))
+			: (["model"; "help"; "version"; "onTerminate"; "onStdErr"; "onStdOut"; "_onWorkerError"; "source_runtime"; "engine_dir"; "executable"].includes($arg.key))
 				continue
 		End case 
 		$valueType:=Value type:C1509($arg.value)
@@ -117,6 +122,8 @@ Function start($option : Object) : 4D:C1709.SystemWorker
 		This:C1470.controller.currentDirectory:=This:C1470.expand($option.source_runtime)
 		This:C1470.controller.variables.BASERT_LIB:=This:C1470.expand($option.engine_dir).path
 		This:C1470.controller.variables.BASERT_SUPERFLUID_AUTO_INSTALL:="0"
+	Else
+		This:C1470.controller.currentDirectory:=This:C1470.expand($option.executable.parent)
 	End if
 
 	return This:C1470.controller.execute($command).worker

@@ -4,6 +4,7 @@ $errors:=[]
 var $root : 4D.Folder
 $root:=Folder("/RESOURCES/lifecycle")
 $root.create()
+$root.file("licensed executable fixture").setText("test fixture; never executed")
 var $a; $b : 4D.File
 $a:=$root.file("a.base")
 $b:=$root.file("b.base")
