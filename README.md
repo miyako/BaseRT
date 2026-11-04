@@ -115,7 +115,8 @@ python3 scripts/test-4d-native.py --tool4d /path/to/tool4d.app/Contents/MacOS/to
 The first suite runs command construction, local-model dispatch and deterministic
 download scheduling against controlled event/worker components. It covers inline
 cache hits, distinct destinations sharing a provider object ID, duplicate,
-failed, cancelled and stale completions. It also runs compiler syntax-only
+failed, cancelled and stale completions. It asserts that real-valued flags use `.` whatever the system decimal
+separator, and prints the separator in effect. It also runs compiler syntax-only
 checking of its fixture, including the public constructor and TCP dispatcher.
 The native suite uses the production controller and harmless OS children for
 stream routing, callback identities and worker reuse. Native-shaped error
@@ -170,7 +171,9 @@ $BaseRT.terminate()
 
 The adapter passes the first model positionally and additional model files as
 repeated `--model` arguments. Other keys translate from `snake_case` into
-`--kebab-case`; true booleans emit flags. `source_runtime` and `engine_dir`
+`--kebab-case`; true booleans emit flags. Numbers always use `.` as the
+decimal separator (`0.3`, not the system-locale `0,3`); very small values may
+be written in exponent form such as `1E-05`. `source_runtime` and `engine_dir`
 are adapter-only `4D.Folder` options; `executable` is an adapter-only `4D.File`.
 None are CLI flags. An external executable uses its parent as working directory.
 The source-runtime wrapper fixes `BASERT_SUPERFLUID_DIR` and disables automatic
@@ -198,6 +201,11 @@ This is not a raw alias of SystemWorker's differently shaped `onError`.
 Without a callable native-error subscriber, diagnostics are logged; the
 pinned event class's empty default handler is not treated as a subscription.
 `onTerminate` reports process exit, including ordinary nonzero exits.
+With nothing to download, an existing local `options.model` (or a non-empty
+model collection, validated before launch) is started; otherwise `onError`
+receives code **2** and nothing is launched. `event` may be omitted (`Null`):
+startup still proceeds and errors are logged instead of delivered. Each
+startup attempt launches the worker at most once.
 **`onSuccess` currently means launch requested, not HTTP/model readiness.**
 It can be followed by a later native execution error or termination.
 Check the selected runtime's diagnostics/protocol and verify that responses

@@ -143,7 +143,7 @@ $BaseRT.terminate()</code></pre>
       <p>The first existing <code>model</code> file is positional; additional files in a
         collection use repeated <code>--model</code> arguments. Other keys map from
         <code>snake_case</code> to <code>--kebab-case</code>. Numeric/text values add an
-        argument; true booleans emit a flag. This translation does not validate
+        argument (numbers always use <code>.</code> as the decimal separator); true booleans emit a flag. This translation does not validate
         whether upstream accepts a flag: check the built server's <code>--help</code>.</p>
       <p>Do not pass llama.cpp flags such as <code>n_gpu_layers</code>, <code>ctx_size</code>,
         <code>jinja</code>, <code>models_dir</code> or <code>models_preset</code>.

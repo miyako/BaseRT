@@ -11,7 +11,8 @@ as repeated `--model` arguments. Model paths are escaped and separated from
 the executable name.
 
 Other option names replace underscores with hyphens. Numeric and text values
-produce `--key value`; true booleans produce `--key`; existing files/folders
+produce `--key value`; numbers are formatted with `_argNumber`, which always
+uses `.` as the decimal separator regardless of system locale (`0.3`, `1E-05`); true booleans produce `--key`; existing files/folders
 produce escaped paths. Collections repeat the flag. False values are omitted.
 `model`, `help`, `version`, `onTerminate`, `onStdErr`, `onStdOut`,
 the internal `_onWorkerError` bridge, `executable`, `source_runtime`, and `engine_dir` are not

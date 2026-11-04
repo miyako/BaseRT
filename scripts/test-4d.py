@@ -34,6 +34,8 @@ def main():
                      fixture / "Project/Sources/Methods")
         shutil.copy2(ROOT / "BaseRT/Project/Sources/Methods/main.4dm",
                      fixture / "Project/Sources/Methods")
+        shutil.copy2(ROOT / "BaseRT/Project/Sources/Methods/_argNumber.4dm",
+                     fixture / "Project/Sources/Methods")
         (fixture / "Resources/bin/macOS").mkdir(parents=True)
         result_path = Path(directory) / "result.json"
         try:
@@ -50,7 +52,9 @@ def main():
         result = json.loads(result_path.read_text())
         if result.get("fatal") or result["errors"]:
             raise ValueError(f"4D regression checks failed: {result}")
+        print(f"System decimal separator during the run: {result.get('decimalSeparator')!r}")
         print("4D checks passed: argument separation/escaping, numeric/multi-model options, "
+              "locale-independent real flags, "
               "explicit external/source-runtime selection, no cached resource fallback, "
               "source-runtime environment, adapter-only option filtering, local-model dispatch, "
               "missing/malformed/conflicting runtime and missing-engine/model errors, absent event object, and "

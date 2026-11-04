@@ -41,6 +41,14 @@ If (Position("--port 8080"; $command)=0) || (Position("--max-tokens 128"; $comma
 	$errors.push("Numeric flags missing")
 End if
 Folder($server.controller.variables.HF_HUB_CACHE).delete()
+var $decimalSeparator : Text
+GET SYSTEM FORMAT(Decimal separator; $decimalSeparator)
+$server.start({model: $model; executable: $executable; port: 8080; temperature: 0.3; top_p: [0.9; 1]})
+$command:=$server.controller.lastCommand
+If (Position(" --temperature 0.3 "; $command)=0) || (Position(" --top-p 0.9  --top-p 1 "; $command)=0)
+	$errors.push("Real flags are not locale-independent decimals (system separator "+$decimalSeparator+"): "+$command)
+End if
+Folder($server.controller.variables.HF_HUB_CACHE).delete()
 
 $options.model:=[$model; $second]
 OB REMOVE($options; "executable")
@@ -146,7 +154,7 @@ End if
 var $resultPath : Text
 var $parameter : Integer
 $parameter:=Get database parameter(User param value; $resultPath)
-File($resultPath).setText(JSON Stringify({errors: $errors; command: $command; syntax: $syntax}))
+File($resultPath).setText(JSON Stringify({errors: $errors; command: $command; syntax: $syntax; decimalSeparator: $decimalSeparator}))
 $model.delete()
 $second.delete()
 $executable.delete()
