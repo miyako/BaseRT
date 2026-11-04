@@ -22,4 +22,7 @@ $BaseRT.terminate()
 ```
 
 Calling the zero-argument constructor is the existing termination idiom; it
-does not prove a model was loaded or an HTTP endpoint was ready.
+does not prove a model was loaded or an HTTP endpoint was ready. It is not a
+passive handle: if no worker is registered on port 8080 it runs the normal
+startup path, which, without a model, launches nothing and logs error code 2
+(code 1 if another process holds the port; there is no event to deliver it to).

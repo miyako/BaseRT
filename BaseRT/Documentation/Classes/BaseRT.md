@@ -59,6 +59,9 @@ controller as `This`. Native execution errors are translated to
 `onError(options, error)` with code 4 and original diagnostics in `error.native`;
 that process-error notification also uses the controller receiver. Ordinary
 stderr/nonzero exits are not automatically execution errors.
+With nothing to download, an existing local `options.model` is started;
+otherwise `onError` receives code 2 and nothing is launched. `event` may be
+`Null`, in which case errors are logged instead of delivered.
 Pending downloads are correlated per destination and attempt, so equal object
 IDs, synchronous cache hits and late/duplicate callbacks cannot double-start.
 Termination also invalidates pending startup; it does not abort external

@@ -75,6 +75,8 @@ def main():
         classes = fixture / "Project/Sources/Classes"
         for name in CLASSES:
             shutil.copy2(ROOT / f"BaseRT/Project/Sources/Classes/{name}.4dm", classes)
+        shutil.copy2(ROOT / "BaseRT/Project/Sources/Methods/_argNumber.4dm",
+                     fixture / "Project/Sources/Methods")
         # This controlled-suite-only class needs _Model and _startup, neither of
         # which belongs to the native stream/process fixture.
         (classes / "LifecycleModels.4dm").unlink(missing_ok=True)
